@@ -225,12 +225,19 @@ export async function loadProductPage(options: {
   const limit = Math.min(Math.max(options.limit ?? PRODUCTS_PAGE_SIZE, 1), 48);
   const offset = Math.max(options.offset ?? 0, 0);
 
-  let request = supabase.from("products").select(PRODUCT_SELECT, { count: "exact" });
-
   const categorySlug = options.categorySlug;
   const offersOnly = options.offersOnly || categorySlug === "offers";
-  if (categorySlug && categorySlug !== "offers") {
-    request = request.eq("categories.slug", categorySlug).not("categories", "is", null);
+  const filterByCategory = Boolean(categorySlug) && categorySlug !== "offers";
+
+  // الفلترة على جدول مرتبط لازم تبقى inner join، وإلا PostgREST بيرجّع كل المنتجات بعلاقة فاضية.
+  let request = supabase
+    .from("products")
+    .select(filterByCategory ? PRODUCT_SELECT.replace("categories (", "categories!inner (") : PRODUCT_SELECT, {
+      count: "exact",
+    });
+
+  if (filterByCategory) {
+    request = request.eq("categories.slug", categorySlug!);
   }
 
   const q = options.query ? sanitizeQuery(options.query) : "";
