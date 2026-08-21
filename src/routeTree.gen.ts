@@ -22,6 +22,7 @@ import { Route as OwnerSetupRouteImport } from './routes/owner-setup'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as ZizoRouteImport } from './routes/zizo'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminBundlesRouteImport } from './routes/admin.bundles'
 import { Route as AdminCatalogRouteImport } from './routes/admin.catalog'
@@ -126,6 +127,11 @@ const SearchRoute = SearchRouteImport.update({
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ZizoRoute = ZizoRouteImport.update({
+  id: '/zizo',
+  path: '/zizo',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
@@ -344,6 +350,7 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PrivacyRoute
   '/search': typeof SearchRoute
   '/terms': typeof TermsRoute
+  '/zizo': typeof ZizoRoute
   '/admin/bundles': typeof AdminBundlesRoute
   '/admin/catalog': typeof AdminCatalogRouteWithChildren
   '/admin/catalog-import': typeof AdminCatalogImportRoute
@@ -397,6 +404,7 @@ export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
   '/search': typeof SearchRoute
   '/terms': typeof TermsRoute
+  '/zizo': typeof ZizoRoute
   '/admin/bundles': typeof AdminBundlesRoute
   '/admin/catalog': typeof AdminCatalogRouteWithChildren
   '/admin/catalog-import': typeof AdminCatalogImportRoute
@@ -451,6 +459,7 @@ export interface FileRoutesById {
   '/privacy': typeof PrivacyRoute
   '/search': typeof SearchRoute
   '/terms': typeof TermsRoute
+  '/zizo': typeof ZizoRoute
   '/admin/bundles': typeof AdminBundlesRoute
   '/admin/catalog': typeof AdminCatalogRouteWithChildren
   '/admin/catalog-import': typeof AdminCatalogImportRoute
@@ -508,6 +517,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/search'
     | '/terms'
+    | '/zizo'
     | '/admin/bundles'
     | '/admin/catalog'
     | '/admin/catalog-import'
@@ -561,6 +571,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/search'
     | '/terms'
+    | '/zizo'
     | '/admin/bundles'
     | '/admin/catalog'
     | '/admin/catalog-import'
@@ -614,6 +625,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/search'
     | '/terms'
+    | '/zizo'
     | '/admin/bundles'
     | '/admin/catalog'
     | '/admin/catalog-import'
@@ -670,6 +682,7 @@ export interface RootRouteChildren {
   PrivacyRoute: typeof PrivacyRoute
   SearchRoute: typeof SearchRoute
   TermsRoute: typeof TermsRoute
+  ZizoRoute: typeof ZizoRoute
   CategorySlugRoute: typeof CategorySlugRoute
   ProductSlugRoute: typeof ProductSlugRoute
   SStoreSlugRoute: typeof SStoreSlugRouteWithChildren
@@ -770,6 +783,13 @@ declare module '@tanstack/react-router' {
       path: '/terms'
       fullPath: '/terms'
       preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/zizo': {
+      id: '/zizo'
+      path: '/zizo'
+      fullPath: '/zizo'
+      preLoaderRoute: typeof ZizoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/': {
@@ -1193,6 +1213,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyRoute: PrivacyRoute,
   SearchRoute: SearchRoute,
   TermsRoute: TermsRoute,
+  ZizoRoute: ZizoRoute,
   CategorySlugRoute: CategorySlugRoute,
   ProductSlugRoute: ProductSlugRoute,
   SStoreSlugRoute: SStoreSlugRouteWithChildren,
