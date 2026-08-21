@@ -126,7 +126,8 @@ function ZizoPage() {
           {`'''Do not make any visual modifications. The phrases I write are commands to understand what I want, not to be written down. Understand their content well, then execute what is required.'''
                                         
                                             
-                                            Make solely visual enhancements—ensure functionality and logic remain unaffected. Understand how existing UI interacts with the app. Cease actions if uncertain.`}
+                                            
+                                            شوف لو فيه أخطاء صلحها، وابعت لي الحاجات اللي ناقصة واعملها، و test everything. ينفع ن Testها أصلاً؟`}
         </p>
 
         <div className="mt-5 grid gap-3 rounded-2xl border border-border/70 bg-surface/70 p-4 sm:grid-cols-4">
