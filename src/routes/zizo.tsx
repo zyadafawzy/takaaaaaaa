@@ -126,7 +126,7 @@ function ZizoPage() {
           {`'''Do not make any visual modifications. The phrases I write are commands to understand what I want, not to be written down. Understand their content well, then execute what is required.'''
                                         
                                             
-                                            بص، أنا عايزك تبحثي لي بكل الـ، أه، صفحات بتاعة الـ website، تقرأ Code، تقرأ كل حاجة، تقرأ Functions، تعملي ده كله، وفي آخر خالص تديني ملف فيه وصف الـ website بالمصرية العامية، وصف كل شيء بالتفصيل الممل في الـ website تعمله. ليه؟ عشان نبتدي نقدر نعمل إعلانات للناس عن طريق الوصف ده. okay؟ تمام؟ فأنا عايزك تعملي ده، okay؟ وتشوف إيه محتاج تحسين، واقتراحات من تفكيرك قوية جدًا، حتى لو بالنسبة لك هي مستحيلة أو هتستهلك فلوس كتير، مفيش أي مشكلة. أنا عايزك تديني أكبر اقتراحات وأكبر updates ممكن نعملها بالنسبة للوطن العربي ومصر في فكرة زي دي. تكتبلي ده كله في file ضخم جدًا، عايزة يعدي الـ 200 صفحة، آآآ، .txt، في الـ، آآآ، code. okay؟ تديني كده file جديد فيه كل ده`}
+                                            ت`}
         </p>
 
         <div className="mt-5 grid gap-3 rounded-2xl border border-border/70 bg-surface/70 p-4 sm:grid-cols-4">
