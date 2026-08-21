@@ -1,0 +1,1 @@
+UPDATE public.admin_master_config SET failed_attempts = 0, locked_until = NULL WHERE id;

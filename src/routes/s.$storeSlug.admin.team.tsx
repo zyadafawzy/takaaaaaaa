@@ -1,0 +1,231 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { Trash2, UserPlus } from "lucide-react";
+import { toast } from "sonner";
+
+import {
+  storeAdminAddMember,
+  storeAdminRemoveMember,
+  storeAdminTeam,
+  storeAdminUpdateMember,
+} from "@/lib/store-admin.functions";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+export const Route = createFileRoute("/s/$storeSlug/admin/team")({
+  component: StoreAdminTeam,
+});
+
+const roleLabels: Record<string, string> = {
+  store_admin: "مدير المتجر",
+  store_staff: "موظف",
+};
+
+function StoreAdminTeam() {
+  const { storeSlug } = Route.useParams();
+  const queryClient = useQueryClient();
+  const query = useQuery({
+    queryKey: ["store-admin", storeSlug, "team"],
+    queryFn: () => storeAdminTeam({ data: { storeSlug } }),
+    retry: false,
+  });
+
+  const [email, setEmail] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [password, setPassword] = useState("");
+  const [role, setRole] = useState<"store_admin" | "store_staff">("store_staff");
+
+  const invalidate = () =>
+    queryClient.invalidateQueries({ queryKey: ["store-admin", storeSlug, "team"] });
+
+  const addMember = useMutation({
+    mutationFn: () =>
+      storeAdminAddMember({
+        data: {
+          storeSlug,
+          email: email.trim().toLowerCase(),
+          fullName: fullName.trim(),
+          role,
+          password: password.trim() ? password.trim() : undefined,
+        },
+      }),
+    onSuccess: async () => {
+      setEmail("");
+      setFullName("");
+      setPassword("");
+      await invalidate();
+      toast.success("تم إضافة العضو للفريق");
+    },
+    onError: (error: Error) => {
+      if (error.message.includes("PASSWORD_REQUIRED"))
+        toast.error("الحساب مش موجود — اكتب كلمة مرور مبدئية عشان ننشئه");
+      else if (error.message.includes("FORBIDDEN")) toast.error("مدير المتجر بس اللي يقدر يضيف");
+      else toast.error("مقدرناش نضيف العضو");
+    },
+  });
+
+  const updateMember = useMutation({
+    mutationFn: (input: { id: string; role?: "store_admin" | "store_staff"; active?: boolean }) =>
+      storeAdminUpdateMember({ data: { storeSlug, ...input } }),
+    onSuccess: async () => {
+      await invalidate();
+      toast.success("تم التحديث");
+    },
+    onError: () => toast.error("مقدرناش نحدّث العضو"),
+  });
+
+  const removeMember = useMutation({
+    mutationFn: (id: string) => storeAdminRemoveMember({ data: { storeSlug, id } }),
+    onSuccess: async () => {
+      await invalidate();
+      toast.success("تم حذف العضو");
+    },
+    onError: () => toast.error("مقدرناش نحذف العضو"),
+  });
+
+  if (query.isLoading) return <Skeleton className="h-72 w-full rounded-2xl" />;
+  if (query.isError)
+    return <p className="text-sm text-destructive">مفيش صلاحية لعرض فريق المتجر.</p>;
+
+  const members = query.data?.members ?? [];
+
+  return (
+    <div className="space-y-6">
+      <section className="rounded-2xl border border-border bg-surface p-5">
+        <h2 className="flex items-center gap-2 text-lg font-extrabold">
+          <UserPlus className="size-5" /> إضافة عضو للفريق
+        </h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          لو الإيميل عنده حساب هيتضاف على طول، ولو جديد اكتب كلمة مرور مبدئية.
+        </p>
+        <form
+          className="mt-4 grid gap-3 md:grid-cols-5"
+          onSubmit={(event) => {
+            event.preventDefault();
+            addMember.mutate();
+          }}
+        >
+          <div className="md:col-span-2">
+            <Label htmlFor="member-email">الإيميل</Label>
+            <Input
+              id="member-email"
+              type="email"
+              dir="ltr"
+              required
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              className="mt-1"
+            />
+          </div>
+          <div>
+            <Label htmlFor="member-name">الاسم</Label>
+            <Input
+              id="member-name"
+              value={fullName}
+              onChange={(event) => setFullName(event.target.value)}
+              className="mt-1"
+            />
+          </div>
+          <div>
+            <Label htmlFor="member-password">كلمة مرور مبدئية</Label>
+            <Input
+              id="member-password"
+              type="text"
+              dir="ltr"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              className="mt-1"
+            />
+          </div>
+          <div>
+            <Label>الصلاحية</Label>
+            <Select value={role} onValueChange={(value) => setRole(value as typeof role)}>
+              <SelectTrigger className="mt-1">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="store_staff">موظف</SelectItem>
+                <SelectItem value="store_admin">مدير المتجر</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="md:col-span-5">
+            <Button type="submit" disabled={addMember.isPending}>
+              {addMember.isPending ? "بنضيف..." : "إضافة"}
+            </Button>
+          </div>
+        </form>
+      </section>
+
+      <section className="rounded-2xl border border-border bg-surface p-5">
+        <h2 className="text-lg font-extrabold">الفريق الحالي ({members.length})</h2>
+        <div className="mt-4 space-y-3">
+          {members.length === 0 ? (
+            <p className="text-sm text-muted-foreground">مفيش أعضاء لسه.</p>
+          ) : null}
+          {members.map((member) => (
+            <div
+              key={member.id}
+              className="flex flex-wrap items-center gap-3 rounded-xl border border-border p-3"
+            >
+              <div className="min-w-40">
+                <p className="font-bold">{member.full_name || member.email}</p>
+                <p className="text-xs text-muted-foreground" dir="ltr">
+                  {member.email}
+                </p>
+              </div>
+              <Select
+                value={member.role}
+                onValueChange={(value) =>
+                  updateMember.mutate({
+                    id: member.id,
+                    role: value as "store_admin" | "store_staff",
+                  })
+                }
+              >
+                <SelectTrigger className="w-40">
+                  <SelectValue>{roleLabels[member.role] ?? member.role}</SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="store_staff">موظف</SelectItem>
+                  <SelectItem value="store_admin">مدير المتجر</SelectItem>
+                </SelectContent>
+              </Select>
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={member.active}
+                  onCheckedChange={(checked) =>
+                    updateMember.mutate({ id: member.id, active: checked })
+                  }
+                />
+                <span className="text-sm text-muted-foreground">
+                  {member.active ? "نشط" : "موقوف"}
+                </span>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="ms-auto text-destructive"
+                onClick={() => removeMember.mutate(member.id)}
+                aria-label="حذف العضو"
+              >
+                <Trash2 className="size-4" />
+              </Button>
+            </div>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
