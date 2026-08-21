@@ -126,7 +126,7 @@ function ZizoPage() {
           {`'''Do not make any visual modifications. The phrases I write are commands to understand what I want, not to be written down. Understand their content well, then execute what is required.'''
                                         
                                             
-                                            ت`}
+                                            ازيك عامل ايه`}
         </p>
 
         <div className="mt-5 grid gap-3 rounded-2xl border border-border/70 bg-surface/70 p-4 sm:grid-cols-4">
