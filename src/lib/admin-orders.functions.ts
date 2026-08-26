@@ -68,7 +68,7 @@ export const adminListOrders = createServerFn({ method: "GET" })
         status: z.string().optional().nullable(),
         query: z.string().optional(),
         offset: z.number().int().min(0).optional(),
-        limit: z.number().int().min(1).max(100).optional(),
+        limit: z.number().int().min(1).max(200).optional(),
       })
       .parse(input ?? {}),
   )
