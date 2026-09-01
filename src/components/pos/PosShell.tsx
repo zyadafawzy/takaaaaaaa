@@ -28,20 +28,38 @@ export function usePos(): PosBootstrapContext {
   return value;
 }
 
-const NAV = [
-  { to: "/pos", label: "الكاشير", exact: true },
-  { to: "/pos/invoices", label: "الفواتير", exact: false },
-  { to: "/pos/customers", label: "العملاء", exact: false },
-  { to: "/pos/suppliers", label: "الموردون", exact: false },
-  { to: "/pos/purchases", label: "المشتريات", exact: false },
-  { to: "/pos/inventory", label: "المخزون", exact: false },
-  { to: "/pos/unknown", label: "أصناف مجهولة", exact: false },
-  { to: "/pos/damaged", label: "هوالك وتالف", exact: false },
-  { to: "/pos/reports", label: "التقارير", exact: false },
-  { to: "/pos/settings", label: "الإعدادات", exact: false },
+const NAV_ITEMS = [
+  { suffix: "", label: "الكاشير", exact: true },
+  { suffix: "/invoices", label: "الفواتير", exact: false },
+  { suffix: "/customers", label: "العملاء", exact: false },
+  { suffix: "/suppliers", label: "الموردون", exact: false },
+  { suffix: "/purchases", label: "المشتريات", exact: false },
+  { suffix: "/inventory", label: "المخزون", exact: false },
+  { suffix: "/unknown", label: "أصناف مجهولة", exact: false },
+  { suffix: "/damaged", label: "هوالك وتالف", exact: false },
+  { suffix: "/reports", label: "التقارير", exact: false },
+  { suffix: "/settings", label: "الإعدادات", exact: false },
 ] as const;
 
-export function PosShell({ children }: { children: ReactNode }) {
+export type PosShellProps = {
+  children: ReactNode;
+  /** لما تتحدد، الشاشة تشتغل على المتجر ده بس (نسخة جوّه لوحة المتجر). */
+  storeSlug?: string;
+  /** أساس الروابط في التنقل. */
+  basePath?: string;
+  /** إخفاء الهيدر العام (اللوجو والخروج) لما نكون جوّه لوحة تانية. */
+  embedded?: boolean;
+  /** قيم الـ params للروابط لو المسار فيه params. */
+  linkParams?: Record<string, string>;
+};
+
+export function PosShell({
+  children,
+  storeSlug,
+  basePath = "/pos",
+  embedded = false,
+  linkParams,
+}: PosShellProps) {
   const [ready, setReady] = useState(false);
   const [signedIn, setSignedIn] = useState(false);
   const [boot, setBoot] = useState<Awaited<ReturnType<typeof posBootstrap>> | null>(null);
