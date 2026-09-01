@@ -167,16 +167,16 @@ export function PosShell({
 
   return (
     <PosContext.Provider value={value}>
-      <div className="min-h-screen bg-background">
+      <div className={embedded ? "bg-background" : "min-h-screen bg-background"}>
         <header className="border-b border-border bg-card">
           <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-3 px-4 py-3">
-            <Logo />
+            {embedded ? null : <Logo />}
             <div className="flex-1">
               <p className="text-sm font-bold">{value.storeName}</p>
               <p className="text-xs text-muted-foreground">{POS_ROLE_LABELS[value.role]}</p>
             </div>
 
-            {value.memberships.length > 1 ? (
+            {!embedded && value.memberships.length > 1 ? (
               <select
                 aria-label="اختيار المتجر"
                 className="h-9 rounded-md border border-input bg-background px-2 text-sm"
