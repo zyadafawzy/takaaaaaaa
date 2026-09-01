@@ -34,14 +34,42 @@ const tabs: Tab[] = [
   { to: "/s/$storeSlug/admin/settings", label: "الإعدادات والتوصيل", icon: Settings, primary: true },
 ];
 
+/**
+ * الدخول للوحة متجر معيّن لازم يتأكد من الخادم إن جلسة Supabase الحالية
+ * فعلاً مسؤولة عن المتجر ده — علامة المتصفح لوحدها مش كفاية.
+ */
 export function useStoreSession(storeSlug: string) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const auth = window.sessionStorage.getItem(`store-admin-auth-${storeSlug}`);
-    setIsLoggedIn(auth === "true");
-    setReady(true);
+    let cancelled = false;
+    void (async () => {
+      try {
+        const { supabase } = await import("@/integrations/supabase/client");
+        const { data } = await supabase.auth.getSession();
+        if (!data.session) throw new Error("NO_SESSION");
+        const { storeAdminSessionCheck } = await import("@/lib/store-admin.functions");
+        const result = await storeAdminSessionCheck({ data: { storeSlug } });
+        if (cancelled) return;
+        if (result.ok) {
+          window.sessionStorage.setItem(`store-admin-auth-${storeSlug}`, "true");
+          setIsLoggedIn(true);
+        } else {
+          window.sessionStorage.removeItem(`store-admin-auth-${storeSlug}`);
+          setIsLoggedIn(false);
+        }
+      } catch {
+        if (cancelled) return;
+        window.sessionStorage.removeItem(`store-admin-auth-${storeSlug}`);
+        setIsLoggedIn(false);
+      } finally {
+        if (!cancelled) setReady(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [storeSlug]);
 
   return { isLoggedIn, ready };
