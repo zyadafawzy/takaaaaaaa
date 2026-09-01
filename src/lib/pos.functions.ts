@@ -238,8 +238,7 @@ export const posScanBarcode = createServerFn({ method: "POST" })
     const { data: result, error } = await context.supabase.rpc("rpc_scan_barcode", {
       p_store_id: data.storeId,
       p_barcode: data.barcode,
-      p_branch_id: data.branchId ?? undefined,
-      p_session_id: undefined,
+      ...(data.branchId ? { p_branch_id: data.branchId } : {}),
     });
     if (error) throw new Error(error.message);
     const raw = result as unknown as Record<string, unknown>;
@@ -353,7 +352,7 @@ export const posCheckout = createServerFn({ method: "POST" })
 
     const { data: numberResult, error: numberError } = await context.supabase.rpc("generate_invoice_number", {
       p_store_id: data.storeId,
-      p_branch_id: data.branchId ?? undefined,
+      ...(data.branchId ? { p_branch_id: data.branchId } : {}),
     });
     if (numberError) throw new Error("INVOICE_NUMBER_FAILED");
 
@@ -636,7 +635,7 @@ export const posCustomerPayment = createServerFn({ method: "POST" })
     const { data: result, error } = await context.supabase.rpc("rpc_customer_payment", {
       p_customer_id: data.customerId,
       p_amount: data.amount,
-      p_notes: data.notes ?? undefined,
+      ...(data.notes ? { p_notes: data.notes } : {}),
     });
     if (error) throw new Error(error.message);
     return result as unknown as { ok: boolean; balance: number };
