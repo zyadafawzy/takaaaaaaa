@@ -27,9 +27,10 @@ export const Route = createFileRoute("/s/$storeSlug/admin/team")({
   component: StoreAdminTeam,
 });
 
-const roleLabels: Record<string, string> = {
-  store_admin: "مدير المتجر",
-  store_staff: "موظف",
+const tierLabels: Record<string, string> = {
+  owner: "صاحب المتجر — كل الصلاحيات",
+  manager: "مشرف / مدير فرع — بيع ومخزون وتقارير",
+  cashier: "كاشير — شاشة البيع بس",
 };
 
 function StoreAdminTeam() {
@@ -44,7 +45,7 @@ function StoreAdminTeam() {
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<"store_admin" | "store_staff">("store_staff");
+  const [tier, setTier] = useState<"owner" | "manager" | "cashier">("cashier");
 
   const invalidate = () =>
     queryClient.invalidateQueries({ queryKey: ["store-admin", storeSlug, "team"] });
@@ -56,7 +57,7 @@ function StoreAdminTeam() {
           storeSlug,
           email: email.trim().toLowerCase(),
           fullName: fullName.trim(),
-          role,
+          tier,
           password: password.trim() ? password.trim() : undefined,
         },
       }),
@@ -76,7 +77,7 @@ function StoreAdminTeam() {
   });
 
   const updateMember = useMutation({
-    mutationFn: (input: { id: string; role?: "store_admin" | "store_staff"; active?: boolean }) =>
+    mutationFn: (input: { id: string; tier?: "owner" | "manager" | "cashier"; active?: boolean }) =>
       storeAdminUpdateMember({ data: { storeSlug, ...input } }),
     onSuccess: async () => {
       await invalidate();
@@ -150,13 +151,14 @@ function StoreAdminTeam() {
           </div>
           <div>
             <Label>الصلاحية</Label>
-            <Select value={role} onValueChange={(value) => setRole(value as typeof role)}>
+            <Select value={tier} onValueChange={(value) => setTier(value as typeof tier)}>
               <SelectTrigger className="mt-1">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="store_staff">موظف</SelectItem>
-                <SelectItem value="store_admin">مدير المتجر</SelectItem>
+                <SelectItem value="cashier">كاشير</SelectItem>
+                <SelectItem value="manager">مشرف / مدير فرع</SelectItem>
+                <SelectItem value="owner">صاحب المتجر</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -186,16 +188,16 @@ function StoreAdminTeam() {
                 </p>
               </div>
               <Select
-                value={member.role}
+                value={member.tier}
                 onValueChange={(value) =>
                   updateMember.mutate({
                     id: member.id,
-                    role: value as "store_admin" | "store_staff",
+                    tier: value as "owner" | "manager" | "cashier",
                   })
                 }
               >
-                <SelectTrigger className="w-40">
-                  <SelectValue>{roleLabels[member.role] ?? member.role}</SelectValue>
+                <SelectTrigger className="w-56">
+                  <SelectValue>{tierLabels[member.tier] ?? member.tier}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="store_staff">موظف</SelectItem>
