@@ -65,13 +65,16 @@ import { Route as ApiPublicStoreLogoIdRouteImport } from './routes/api/public/st
 import { Route as SStoreSlugAdminIndexRouteImport } from './routes/s.$storeSlug.admin.index'
 import { Route as SStoreSlugAdminAnnouncementsRouteImport } from './routes/s.$storeSlug.admin.announcements'
 import { Route as SStoreSlugAdminCatalogRouteImport } from './routes/s.$storeSlug.admin.catalog'
+import { Route as SStoreSlugAdminCustomersRouteImport } from './routes/s.$storeSlug.admin.customers'
 import { Route as SStoreSlugAdminDeliveryRouteImport } from './routes/s.$storeSlug.admin.delivery'
 import { Route as SStoreSlugAdminOrdersRouteImport } from './routes/s.$storeSlug.admin.orders'
 import { Route as SStoreSlugAdminPosRouteImport } from './routes/s.$storeSlug.admin.pos'
 import { Route as SStoreSlugAdminReportsRouteImport } from './routes/s.$storeSlug.admin.reports'
+import { Route as SStoreSlugAdminSalesRouteImport } from './routes/s.$storeSlug.admin.sales'
 import { Route as SStoreSlugAdminSettingsRouteImport } from './routes/s.$storeSlug.admin.settings'
 import { Route as SStoreSlugAdminTeamRouteImport } from './routes/s.$storeSlug.admin.team'
 import { Route as SStoreSlugAdminThemeRouteImport } from './routes/s.$storeSlug.admin.theme'
+import { Route as SStoreSlugAdminWhatsappRouteImport } from './routes/s.$storeSlug.admin.whatsapp'
 import { Route as SStoreSlugOrderTokenRouteImport } from './routes/s.$storeSlug.order.$token'
 import { Route as SStoreSlugProductSlugRouteImport } from './routes/s.$storeSlug.product.$slug'
 import { Route as SStoreSlugTrackTokenRouteImport } from './routes/s.$storeSlug.track.$token'
@@ -367,6 +370,12 @@ const SStoreSlugAdminCatalogRoute = SStoreSlugAdminCatalogRouteImport.update({
   path: '/catalog',
   getParentRoute: () => SStoreSlugAdminRoute,
 } as any)
+const SStoreSlugAdminCustomersRoute =
+  SStoreSlugAdminCustomersRouteImport.update({
+    id: '/customers',
+    path: '/customers',
+    getParentRoute: () => SStoreSlugAdminRoute,
+  } as any)
 const SStoreSlugAdminDeliveryRoute = SStoreSlugAdminDeliveryRouteImport.update({
   id: '/delivery',
   path: '/delivery',
@@ -387,6 +396,11 @@ const SStoreSlugAdminReportsRoute = SStoreSlugAdminReportsRouteImport.update({
   path: '/reports',
   getParentRoute: () => SStoreSlugAdminRoute,
 } as any)
+const SStoreSlugAdminSalesRoute = SStoreSlugAdminSalesRouteImport.update({
+  id: '/sales',
+  path: '/sales',
+  getParentRoute: () => SStoreSlugAdminRoute,
+} as any)
 const SStoreSlugAdminSettingsRoute = SStoreSlugAdminSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -400,6 +414,11 @@ const SStoreSlugAdminTeamRoute = SStoreSlugAdminTeamRouteImport.update({
 const SStoreSlugAdminThemeRoute = SStoreSlugAdminThemeRouteImport.update({
   id: '/theme',
   path: '/theme',
+  getParentRoute: () => SStoreSlugAdminRoute,
+} as any)
+const SStoreSlugAdminWhatsappRoute = SStoreSlugAdminWhatsappRouteImport.update({
+  id: '/whatsapp',
+  path: '/whatsapp',
   getParentRoute: () => SStoreSlugAdminRoute,
 } as any)
 const SStoreSlugOrderTokenRoute = SStoreSlugOrderTokenRouteImport.update({
@@ -533,13 +552,16 @@ export interface FileRoutesByFullPath {
   '/api/public/store-logo/$id': typeof ApiPublicStoreLogoIdRoute
   '/s/$storeSlug/admin/announcements': typeof SStoreSlugAdminAnnouncementsRoute
   '/s/$storeSlug/admin/catalog': typeof SStoreSlugAdminCatalogRoute
+  '/s/$storeSlug/admin/customers': typeof SStoreSlugAdminCustomersRoute
   '/s/$storeSlug/admin/delivery': typeof SStoreSlugAdminDeliveryRoute
   '/s/$storeSlug/admin/orders': typeof SStoreSlugAdminOrdersRoute
   '/s/$storeSlug/admin/pos': typeof SStoreSlugAdminPosRouteWithChildren
   '/s/$storeSlug/admin/reports': typeof SStoreSlugAdminReportsRoute
+  '/s/$storeSlug/admin/sales': typeof SStoreSlugAdminSalesRoute
   '/s/$storeSlug/admin/settings': typeof SStoreSlugAdminSettingsRoute
   '/s/$storeSlug/admin/team': typeof SStoreSlugAdminTeamRoute
   '/s/$storeSlug/admin/theme': typeof SStoreSlugAdminThemeRoute
+  '/s/$storeSlug/admin/whatsapp': typeof SStoreSlugAdminWhatsappRoute
   '/s/$storeSlug/order/$token': typeof SStoreSlugOrderTokenRoute
   '/s/$storeSlug/product/$slug': typeof SStoreSlugProductSlugRoute
   '/s/$storeSlug/track/$token': typeof SStoreSlugTrackTokenRoute
@@ -606,12 +628,15 @@ export interface FileRoutesByTo {
   '/api/public/store-logo/$id': typeof ApiPublicStoreLogoIdRoute
   '/s/$storeSlug/admin/announcements': typeof SStoreSlugAdminAnnouncementsRoute
   '/s/$storeSlug/admin/catalog': typeof SStoreSlugAdminCatalogRoute
+  '/s/$storeSlug/admin/customers': typeof SStoreSlugAdminCustomersRoute
   '/s/$storeSlug/admin/delivery': typeof SStoreSlugAdminDeliveryRoute
   '/s/$storeSlug/admin/orders': typeof SStoreSlugAdminOrdersRoute
   '/s/$storeSlug/admin/reports': typeof SStoreSlugAdminReportsRoute
+  '/s/$storeSlug/admin/sales': typeof SStoreSlugAdminSalesRoute
   '/s/$storeSlug/admin/settings': typeof SStoreSlugAdminSettingsRoute
   '/s/$storeSlug/admin/team': typeof SStoreSlugAdminTeamRoute
   '/s/$storeSlug/admin/theme': typeof SStoreSlugAdminThemeRoute
+  '/s/$storeSlug/admin/whatsapp': typeof SStoreSlugAdminWhatsappRoute
   '/s/$storeSlug/order/$token': typeof SStoreSlugOrderTokenRoute
   '/s/$storeSlug/product/$slug': typeof SStoreSlugProductSlugRoute
   '/s/$storeSlug/track/$token': typeof SStoreSlugTrackTokenRoute
@@ -684,13 +709,16 @@ export interface FileRoutesById {
   '/api/public/store-logo/$id': typeof ApiPublicStoreLogoIdRoute
   '/s/$storeSlug/admin/announcements': typeof SStoreSlugAdminAnnouncementsRoute
   '/s/$storeSlug/admin/catalog': typeof SStoreSlugAdminCatalogRoute
+  '/s/$storeSlug/admin/customers': typeof SStoreSlugAdminCustomersRoute
   '/s/$storeSlug/admin/delivery': typeof SStoreSlugAdminDeliveryRoute
   '/s/$storeSlug/admin/orders': typeof SStoreSlugAdminOrdersRoute
   '/s/$storeSlug/admin/pos': typeof SStoreSlugAdminPosRouteWithChildren
   '/s/$storeSlug/admin/reports': typeof SStoreSlugAdminReportsRoute
+  '/s/$storeSlug/admin/sales': typeof SStoreSlugAdminSalesRoute
   '/s/$storeSlug/admin/settings': typeof SStoreSlugAdminSettingsRoute
   '/s/$storeSlug/admin/team': typeof SStoreSlugAdminTeamRoute
   '/s/$storeSlug/admin/theme': typeof SStoreSlugAdminThemeRoute
+  '/s/$storeSlug/admin/whatsapp': typeof SStoreSlugAdminWhatsappRoute
   '/s/$storeSlug/order/$token': typeof SStoreSlugOrderTokenRoute
   '/s/$storeSlug/product/$slug': typeof SStoreSlugProductSlugRoute
   '/s/$storeSlug/track/$token': typeof SStoreSlugTrackTokenRoute
@@ -764,13 +792,16 @@ export interface FileRouteTypes {
     | '/api/public/store-logo/$id'
     | '/s/$storeSlug/admin/announcements'
     | '/s/$storeSlug/admin/catalog'
+    | '/s/$storeSlug/admin/customers'
     | '/s/$storeSlug/admin/delivery'
     | '/s/$storeSlug/admin/orders'
     | '/s/$storeSlug/admin/pos'
     | '/s/$storeSlug/admin/reports'
+    | '/s/$storeSlug/admin/sales'
     | '/s/$storeSlug/admin/settings'
     | '/s/$storeSlug/admin/team'
     | '/s/$storeSlug/admin/theme'
+    | '/s/$storeSlug/admin/whatsapp'
     | '/s/$storeSlug/order/$token'
     | '/s/$storeSlug/product/$slug'
     | '/s/$storeSlug/track/$token'
@@ -837,12 +868,15 @@ export interface FileRouteTypes {
     | '/api/public/store-logo/$id'
     | '/s/$storeSlug/admin/announcements'
     | '/s/$storeSlug/admin/catalog'
+    | '/s/$storeSlug/admin/customers'
     | '/s/$storeSlug/admin/delivery'
     | '/s/$storeSlug/admin/orders'
     | '/s/$storeSlug/admin/reports'
+    | '/s/$storeSlug/admin/sales'
     | '/s/$storeSlug/admin/settings'
     | '/s/$storeSlug/admin/team'
     | '/s/$storeSlug/admin/theme'
+    | '/s/$storeSlug/admin/whatsapp'
     | '/s/$storeSlug/order/$token'
     | '/s/$storeSlug/product/$slug'
     | '/s/$storeSlug/track/$token'
@@ -914,13 +948,16 @@ export interface FileRouteTypes {
     | '/api/public/store-logo/$id'
     | '/s/$storeSlug/admin/announcements'
     | '/s/$storeSlug/admin/catalog'
+    | '/s/$storeSlug/admin/customers'
     | '/s/$storeSlug/admin/delivery'
     | '/s/$storeSlug/admin/orders'
     | '/s/$storeSlug/admin/pos'
     | '/s/$storeSlug/admin/reports'
+    | '/s/$storeSlug/admin/sales'
     | '/s/$storeSlug/admin/settings'
     | '/s/$storeSlug/admin/team'
     | '/s/$storeSlug/admin/theme'
+    | '/s/$storeSlug/admin/whatsapp'
     | '/s/$storeSlug/order/$token'
     | '/s/$storeSlug/product/$slug'
     | '/s/$storeSlug/track/$token'
@@ -1356,6 +1393,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SStoreSlugAdminCatalogRouteImport
       parentRoute: typeof SStoreSlugAdminRoute
     }
+    '/s/$storeSlug/admin/customers': {
+      id: '/s/$storeSlug/admin/customers'
+      path: '/customers'
+      fullPath: '/s/$storeSlug/admin/customers'
+      preLoaderRoute: typeof SStoreSlugAdminCustomersRouteImport
+      parentRoute: typeof SStoreSlugAdminRoute
+    }
     '/s/$storeSlug/admin/delivery': {
       id: '/s/$storeSlug/admin/delivery'
       path: '/delivery'
@@ -1384,6 +1428,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SStoreSlugAdminReportsRouteImport
       parentRoute: typeof SStoreSlugAdminRoute
     }
+    '/s/$storeSlug/admin/sales': {
+      id: '/s/$storeSlug/admin/sales'
+      path: '/sales'
+      fullPath: '/s/$storeSlug/admin/sales'
+      preLoaderRoute: typeof SStoreSlugAdminSalesRouteImport
+      parentRoute: typeof SStoreSlugAdminRoute
+    }
     '/s/$storeSlug/admin/settings': {
       id: '/s/$storeSlug/admin/settings'
       path: '/settings'
@@ -1403,6 +1454,13 @@ declare module '@tanstack/react-router' {
       path: '/theme'
       fullPath: '/s/$storeSlug/admin/theme'
       preLoaderRoute: typeof SStoreSlugAdminThemeRouteImport
+      parentRoute: typeof SStoreSlugAdminRoute
+    }
+    '/s/$storeSlug/admin/whatsapp': {
+      id: '/s/$storeSlug/admin/whatsapp'
+      path: '/whatsapp'
+      fullPath: '/s/$storeSlug/admin/whatsapp'
+      preLoaderRoute: typeof SStoreSlugAdminWhatsappRouteImport
       parentRoute: typeof SStoreSlugAdminRoute
     }
     '/s/$storeSlug/order/$token': {
@@ -1631,26 +1689,32 @@ const SStoreSlugAdminPosRouteWithChildren =
 interface SStoreSlugAdminRouteChildren {
   SStoreSlugAdminAnnouncementsRoute: typeof SStoreSlugAdminAnnouncementsRoute
   SStoreSlugAdminCatalogRoute: typeof SStoreSlugAdminCatalogRoute
+  SStoreSlugAdminCustomersRoute: typeof SStoreSlugAdminCustomersRoute
   SStoreSlugAdminDeliveryRoute: typeof SStoreSlugAdminDeliveryRoute
   SStoreSlugAdminOrdersRoute: typeof SStoreSlugAdminOrdersRoute
   SStoreSlugAdminPosRoute: typeof SStoreSlugAdminPosRouteWithChildren
   SStoreSlugAdminReportsRoute: typeof SStoreSlugAdminReportsRoute
+  SStoreSlugAdminSalesRoute: typeof SStoreSlugAdminSalesRoute
   SStoreSlugAdminSettingsRoute: typeof SStoreSlugAdminSettingsRoute
   SStoreSlugAdminTeamRoute: typeof SStoreSlugAdminTeamRoute
   SStoreSlugAdminThemeRoute: typeof SStoreSlugAdminThemeRoute
+  SStoreSlugAdminWhatsappRoute: typeof SStoreSlugAdminWhatsappRoute
   SStoreSlugAdminIndexRoute: typeof SStoreSlugAdminIndexRoute
 }
 
 const SStoreSlugAdminRouteChildren: SStoreSlugAdminRouteChildren = {
   SStoreSlugAdminAnnouncementsRoute: SStoreSlugAdminAnnouncementsRoute,
   SStoreSlugAdminCatalogRoute: SStoreSlugAdminCatalogRoute,
+  SStoreSlugAdminCustomersRoute: SStoreSlugAdminCustomersRoute,
   SStoreSlugAdminDeliveryRoute: SStoreSlugAdminDeliveryRoute,
   SStoreSlugAdminOrdersRoute: SStoreSlugAdminOrdersRoute,
   SStoreSlugAdminPosRoute: SStoreSlugAdminPosRouteWithChildren,
   SStoreSlugAdminReportsRoute: SStoreSlugAdminReportsRoute,
+  SStoreSlugAdminSalesRoute: SStoreSlugAdminSalesRoute,
   SStoreSlugAdminSettingsRoute: SStoreSlugAdminSettingsRoute,
   SStoreSlugAdminTeamRoute: SStoreSlugAdminTeamRoute,
   SStoreSlugAdminThemeRoute: SStoreSlugAdminThemeRoute,
+  SStoreSlugAdminWhatsappRoute: SStoreSlugAdminWhatsappRoute,
   SStoreSlugAdminIndexRoute: SStoreSlugAdminIndexRoute,
 }
 

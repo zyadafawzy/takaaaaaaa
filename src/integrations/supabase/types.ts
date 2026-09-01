@@ -769,35 +769,97 @@ export type Database = {
           },
         ]
       }
+      customer_segments: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          definition_type: string
+          filters_json: Json
+          id: string
+          name: string
+          store_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          definition_type?: string
+          filters_json?: Json
+          id?: string
+          name: string
+          store_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          definition_type?: string
+          filters_json?: Json
+          id?: string
+          name?: string
+          store_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_segments_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           address: string | null
           created_at: string
+          credit_limit: number
           deleted_at: string | null
           id: string
           is_active: boolean
+          marketing_opt_in: boolean
           name: string
+          notes: string | null
+          opt_in_at: string | null
+          opt_in_source: string | null
+          opt_out_at: string | null
+          opt_out_reason: string | null
           phone: string | null
+          phone_normalized: string | null
           store_id: string
         }
         Insert: {
           address?: string | null
           created_at?: string
+          credit_limit?: number
           deleted_at?: string | null
           id?: string
           is_active?: boolean
+          marketing_opt_in?: boolean
           name: string
+          notes?: string | null
+          opt_in_at?: string | null
+          opt_in_source?: string | null
+          opt_out_at?: string | null
+          opt_out_reason?: string | null
           phone?: string | null
+          phone_normalized?: string | null
           store_id: string
         }
         Update: {
           address?: string | null
           created_at?: string
+          credit_limit?: number
           deleted_at?: string | null
           id?: string
           is_active?: boolean
+          marketing_opt_in?: boolean
           name?: string
+          notes?: string | null
+          opt_in_at?: string | null
+          opt_in_source?: string | null
+          opt_out_at?: string | null
+          opt_out_reason?: string | null
           phone?: string | null
+          phone_normalized?: string | null
           store_id?: string
         }
         Relationships: [
@@ -1027,6 +1089,44 @@ export type Database = {
             columns: ["variant_id"]
             isOneToOne: false
             referencedRelation: "product_variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      export_logs: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          export_type: string
+          filters: Json
+          id: string
+          row_count: number
+          store_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          export_type: string
+          filters?: Json
+          id?: string
+          row_count?: number
+          store_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          export_type?: string
+          filters?: Json
+          id?: string
+          row_count?: number
+          store_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "export_logs_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
             referencedColumns: ["id"]
           },
         ]
@@ -1375,6 +1475,53 @@ export type Database = {
           },
         ]
       }
+      loyalty_settings: {
+        Row: {
+          allow_redemption: boolean
+          earn_amount_per_point: number
+          enabled: boolean
+          expiry_months: number | null
+          max_discount_cap: number | null
+          minimum_redeem_points: number
+          point_value: number
+          rounding_mode: string
+          store_id: string
+          updated_at: string
+        }
+        Insert: {
+          allow_redemption?: boolean
+          earn_amount_per_point?: number
+          enabled?: boolean
+          expiry_months?: number | null
+          max_discount_cap?: number | null
+          minimum_redeem_points?: number
+          point_value?: number
+          rounding_mode?: string
+          store_id: string
+          updated_at?: string
+        }
+        Update: {
+          allow_redemption?: boolean
+          earn_amount_per_point?: number
+          enabled?: boolean
+          expiry_months?: number | null
+          max_discount_cap?: number | null
+          minimum_redeem_points?: number
+          point_value?: number
+          rounding_mode?: string
+          store_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loyalty_settings_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: true
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       loyalty_transactions: {
         Row: {
           balance_after: number
@@ -1579,6 +1726,9 @@ export type Database = {
           customer_whatsapp: string
           delivery_fee: number
           discount_total: number
+          financial_invoice_id: string | null
+          financial_posted_at: string | null
+          financial_posted_by: string | null
           fulfillment: Database["public"]["Enums"]["fulfillment_method"]
           governorate: string
           grand_total: number
@@ -1587,6 +1737,7 @@ export type Database = {
           landmark: string
           order_number: string
           payment: Database["public"]["Enums"]["payment_method"]
+          posting_status: string
           status: Database["public"]["Enums"]["order_status"]
           store_id: string | null
           street: string
@@ -1606,6 +1757,9 @@ export type Database = {
           customer_whatsapp?: string
           delivery_fee?: number
           discount_total?: number
+          financial_invoice_id?: string | null
+          financial_posted_at?: string | null
+          financial_posted_by?: string | null
           fulfillment?: Database["public"]["Enums"]["fulfillment_method"]
           governorate?: string
           grand_total?: number
@@ -1614,6 +1768,7 @@ export type Database = {
           landmark?: string
           order_number?: string
           payment?: Database["public"]["Enums"]["payment_method"]
+          posting_status?: string
           status?: Database["public"]["Enums"]["order_status"]
           store_id?: string | null
           street?: string
@@ -1633,6 +1788,9 @@ export type Database = {
           customer_whatsapp?: string
           delivery_fee?: number
           discount_total?: number
+          financial_invoice_id?: string | null
+          financial_posted_at?: string | null
+          financial_posted_by?: string | null
           fulfillment?: Database["public"]["Enums"]["fulfillment_method"]
           governorate?: string
           grand_total?: number
@@ -1641,6 +1799,7 @@ export type Database = {
           landmark?: string
           order_number?: string
           payment?: Database["public"]["Enums"]["payment_method"]
+          posting_status?: string
           status?: Database["public"]["Enums"]["order_status"]
           store_id?: string | null
           street?: string
@@ -3533,6 +3692,171 @@ export type Database = {
           },
           {
             foreignKeyName: "unknown_scan_items_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_campaign_messages: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          customer_id: string | null
+          external_message_id: string | null
+          id: string
+          message_text: string
+          phone_normalized: string
+          provider_response: Json | null
+          status: string
+          store_id: string
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          customer_id?: string | null
+          external_message_id?: string | null
+          id?: string
+          message_text: string
+          phone_normalized: string
+          provider_response?: Json | null
+          status?: string
+          store_id: string
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          customer_id?: string | null
+          external_message_id?: string | null
+          id?: string
+          message_text?: string
+          phone_normalized?: string
+          provider_response?: Json | null
+          status?: string
+          store_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_campaign_messages_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_campaign_messages_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_campaign_messages_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_campaigns: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          failure_reason: string | null
+          id: string
+          message_template: string
+          name: string
+          prepared_at: string | null
+          provider: string
+          recipient_count: number
+          segment_type: string
+          sent_at: string | null
+          status: string
+          store_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          failure_reason?: string | null
+          id?: string
+          message_template: string
+          name: string
+          prepared_at?: string | null
+          provider?: string
+          recipient_count?: number
+          segment_type?: string
+          sent_at?: string | null
+          status?: string
+          store_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          failure_reason?: string | null
+          id?: string
+          message_template?: string
+          name?: string
+          prepared_at?: string | null
+          provider?: string
+          recipient_count?: number
+          segment_type?: string
+          sent_at?: string | null
+          status?: string
+          store_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_campaigns_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_consent_log: {
+        Row: {
+          channel_source: string
+          consent_at: string
+          consent_status: string
+          created_by: string | null
+          customer_id: string
+          id: string
+          notes: string | null
+          store_id: string
+        }
+        Insert: {
+          channel_source?: string
+          consent_at?: string
+          consent_status: string
+          created_by?: string | null
+          customer_id: string
+          id?: string
+          notes?: string | null
+          store_id: string
+        }
+        Update: {
+          channel_source?: string
+          consent_at?: string
+          consent_status?: string
+          created_by?: string | null
+          customer_id?: string
+          id?: string
+          notes?: string | null
+          store_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_consent_log_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_consent_log_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
             referencedRelation: "stores"
