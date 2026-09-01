@@ -27,7 +27,11 @@ const tabs: Tab[] = [
   { to: "/s/$storeSlug/admin/delivery", label: "شاشة التوصيل", icon: Truck, primary: true },
   { to: "/s/$storeSlug/admin/catalog", label: "المنتجات", icon: Package, primary: true },
   { to: "/s/$storeSlug/admin/pos", label: "الكاشير (POS)", icon: ScanBarcode, primary: true },
+  { to: "/s/$storeSlug/admin/sales", label: "مركز المبيعات", icon: BarChart3, primary: true },
+  { to: "/s/$storeSlug/admin/customers", label: "العملاء", icon: Users, primary: true },
+  { to: "/s/$storeSlug/admin/whatsapp", label: "واتساب", icon: Megaphone },
   { to: "/s/$storeSlug/admin/reports", label: "التقارير", icon: BarChart3, primary: true },
+
   { to: "/s/$storeSlug/admin/announcements", label: "الإعلانات", icon: Megaphone },
   { to: "/s/$storeSlug/admin/team", label: "الفريق", icon: Users },
   { to: "/s/$storeSlug/admin/theme", label: "الشكل والثيم", icon: Palette },

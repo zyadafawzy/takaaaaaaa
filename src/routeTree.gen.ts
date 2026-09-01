@@ -74,6 +74,7 @@ import { Route as SStoreSlugAdminSalesRouteImport } from './routes/s.$storeSlug.
 import { Route as SStoreSlugAdminSettingsRouteImport } from './routes/s.$storeSlug.admin.settings'
 import { Route as SStoreSlugAdminTeamRouteImport } from './routes/s.$storeSlug.admin.team'
 import { Route as SStoreSlugAdminThemeRouteImport } from './routes/s.$storeSlug.admin.theme'
+import { Route as SStoreSlugAdminWhatsappRouteImport } from './routes/s.$storeSlug.admin.whatsapp'
 import { Route as SStoreSlugOrderTokenRouteImport } from './routes/s.$storeSlug.order.$token'
 import { Route as SStoreSlugProductSlugRouteImport } from './routes/s.$storeSlug.product.$slug'
 import { Route as SStoreSlugTrackTokenRouteImport } from './routes/s.$storeSlug.track.$token'
@@ -415,6 +416,11 @@ const SStoreSlugAdminThemeRoute = SStoreSlugAdminThemeRouteImport.update({
   path: '/theme',
   getParentRoute: () => SStoreSlugAdminRoute,
 } as any)
+const SStoreSlugAdminWhatsappRoute = SStoreSlugAdminWhatsappRouteImport.update({
+  id: '/whatsapp',
+  path: '/whatsapp',
+  getParentRoute: () => SStoreSlugAdminRoute,
+} as any)
 const SStoreSlugOrderTokenRoute = SStoreSlugOrderTokenRouteImport.update({
   id: '/order/$token',
   path: '/order/$token',
@@ -555,6 +561,7 @@ export interface FileRoutesByFullPath {
   '/s/$storeSlug/admin/settings': typeof SStoreSlugAdminSettingsRoute
   '/s/$storeSlug/admin/team': typeof SStoreSlugAdminTeamRoute
   '/s/$storeSlug/admin/theme': typeof SStoreSlugAdminThemeRoute
+  '/s/$storeSlug/admin/whatsapp': typeof SStoreSlugAdminWhatsappRoute
   '/s/$storeSlug/order/$token': typeof SStoreSlugOrderTokenRoute
   '/s/$storeSlug/product/$slug': typeof SStoreSlugProductSlugRoute
   '/s/$storeSlug/track/$token': typeof SStoreSlugTrackTokenRoute
@@ -629,6 +636,7 @@ export interface FileRoutesByTo {
   '/s/$storeSlug/admin/settings': typeof SStoreSlugAdminSettingsRoute
   '/s/$storeSlug/admin/team': typeof SStoreSlugAdminTeamRoute
   '/s/$storeSlug/admin/theme': typeof SStoreSlugAdminThemeRoute
+  '/s/$storeSlug/admin/whatsapp': typeof SStoreSlugAdminWhatsappRoute
   '/s/$storeSlug/order/$token': typeof SStoreSlugOrderTokenRoute
   '/s/$storeSlug/product/$slug': typeof SStoreSlugProductSlugRoute
   '/s/$storeSlug/track/$token': typeof SStoreSlugTrackTokenRoute
@@ -710,6 +718,7 @@ export interface FileRoutesById {
   '/s/$storeSlug/admin/settings': typeof SStoreSlugAdminSettingsRoute
   '/s/$storeSlug/admin/team': typeof SStoreSlugAdminTeamRoute
   '/s/$storeSlug/admin/theme': typeof SStoreSlugAdminThemeRoute
+  '/s/$storeSlug/admin/whatsapp': typeof SStoreSlugAdminWhatsappRoute
   '/s/$storeSlug/order/$token': typeof SStoreSlugOrderTokenRoute
   '/s/$storeSlug/product/$slug': typeof SStoreSlugProductSlugRoute
   '/s/$storeSlug/track/$token': typeof SStoreSlugTrackTokenRoute
@@ -792,6 +801,7 @@ export interface FileRouteTypes {
     | '/s/$storeSlug/admin/settings'
     | '/s/$storeSlug/admin/team'
     | '/s/$storeSlug/admin/theme'
+    | '/s/$storeSlug/admin/whatsapp'
     | '/s/$storeSlug/order/$token'
     | '/s/$storeSlug/product/$slug'
     | '/s/$storeSlug/track/$token'
@@ -866,6 +876,7 @@ export interface FileRouteTypes {
     | '/s/$storeSlug/admin/settings'
     | '/s/$storeSlug/admin/team'
     | '/s/$storeSlug/admin/theme'
+    | '/s/$storeSlug/admin/whatsapp'
     | '/s/$storeSlug/order/$token'
     | '/s/$storeSlug/product/$slug'
     | '/s/$storeSlug/track/$token'
@@ -946,6 +957,7 @@ export interface FileRouteTypes {
     | '/s/$storeSlug/admin/settings'
     | '/s/$storeSlug/admin/team'
     | '/s/$storeSlug/admin/theme'
+    | '/s/$storeSlug/admin/whatsapp'
     | '/s/$storeSlug/order/$token'
     | '/s/$storeSlug/product/$slug'
     | '/s/$storeSlug/track/$token'
@@ -1444,6 +1456,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SStoreSlugAdminThemeRouteImport
       parentRoute: typeof SStoreSlugAdminRoute
     }
+    '/s/$storeSlug/admin/whatsapp': {
+      id: '/s/$storeSlug/admin/whatsapp'
+      path: '/whatsapp'
+      fullPath: '/s/$storeSlug/admin/whatsapp'
+      preLoaderRoute: typeof SStoreSlugAdminWhatsappRouteImport
+      parentRoute: typeof SStoreSlugAdminRoute
+    }
     '/s/$storeSlug/order/$token': {
       id: '/s/$storeSlug/order/$token'
       path: '/order/$token'
@@ -1679,6 +1698,7 @@ interface SStoreSlugAdminRouteChildren {
   SStoreSlugAdminSettingsRoute: typeof SStoreSlugAdminSettingsRoute
   SStoreSlugAdminTeamRoute: typeof SStoreSlugAdminTeamRoute
   SStoreSlugAdminThemeRoute: typeof SStoreSlugAdminThemeRoute
+  SStoreSlugAdminWhatsappRoute: typeof SStoreSlugAdminWhatsappRoute
   SStoreSlugAdminIndexRoute: typeof SStoreSlugAdminIndexRoute
 }
 
@@ -1694,6 +1714,7 @@ const SStoreSlugAdminRouteChildren: SStoreSlugAdminRouteChildren = {
   SStoreSlugAdminSettingsRoute: SStoreSlugAdminSettingsRoute,
   SStoreSlugAdminTeamRoute: SStoreSlugAdminTeamRoute,
   SStoreSlugAdminThemeRoute: SStoreSlugAdminThemeRoute,
+  SStoreSlugAdminWhatsappRoute: SStoreSlugAdminWhatsappRoute,
   SStoreSlugAdminIndexRoute: SStoreSlugAdminIndexRoute,
 }
 
