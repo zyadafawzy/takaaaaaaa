@@ -406,11 +406,46 @@ export const posCheckout = createServerFn({ method: "POST" })
       };
     });
 
+    // الأصناف غير المسجّلة: نسجّل الباركود في تقرير المجهولات ونضيف سطر snapshot بسعر يدوي.
+    for (const unknown of data.unknownLines) {
+      const { data: scan } = await context.supabase
+        .from("unknown_scan_items")
+        .insert({
+          store_id: data.storeId,
+          branch_id: data.branchId ?? null,
+          barcode: unknown.barcode,
+          temp_name: unknown.name,
+          manual_price: unknown.sellPrice,
+          qty: unknown.qty,
+          unit_label: unknown.unitLabel || "قطعة",
+          notes: unknown.notes ?? null,
+        })
+        .select("id")
+        .single();
+
+      items.push({
+        invoice_id: invoice.id,
+        variant_id: null,
+        product_id: null,
+        barcode_scanned: unknown.barcode,
+        product_name_snapshot: unknown.name,
+        unit_label_snapshot: unknown.unitLabel || "قطعة",
+        sell_price_snapshot: unknown.sellPrice,
+        cost_price_snapshot: null,
+        qty: unknown.qty,
+        discount_pct: 0,
+        line_total: round2(unknown.sellPrice * unknown.qty),
+        is_unknown_product: true,
+        unknown_scan_item_id: scan?.id ?? null,
+      } as unknown as (typeof items)[number]);
+    }
+
     const { error: itemsError } = await context.supabase.from("invoice_items").insert(items);
     if (itemsError) {
       await context.supabase.from("pos_invoices").delete().eq("id", invoice.id);
       throw new Error("INVOICE_ITEMS_FAILED");
     }
+
 
     if (data.payments.length > 0) {
       const { error: payError } = await context.supabase.from("invoice_payments").insert(
