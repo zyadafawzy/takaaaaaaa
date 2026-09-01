@@ -1,28 +1,44 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Printer, Trash2 } from "lucide-react";
+import { PauseCircle, Printer, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { BarcodeScanner } from "@/components/pos/BarcodeScanner";
 import { CartPanel } from "@/components/pos/CartPanel";
 import { CustomerSelector } from "@/components/pos/CustomerSelector";
+import { HoldInvoiceDrawer } from "@/components/pos/HoldInvoiceDrawer";
 import { InvoicePrint } from "@/components/pos/InvoicePrint";
 import { PaymentModal, type PaymentSplit } from "@/components/pos/PaymentModal";
+import { UnknownBarcodeDialog } from "@/components/pos/UnknownBarcodeDialog";
 import { usePos } from "@/components/pos/PosShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { formatPrice } from "@/lib/format";
 import {
+  posHoldCart,
+  posListHeldInvoices,
+  posResumeHeldInvoice,
+} from "@/lib/pos-ops.functions";
+import {
   posAttachBarcode,
   posCheckout,
   posCreateCustomer,
   posGetInvoice,
   posListCustomers,
+  posLogPrint,
   posScanBarcode,
   posSearchVariants,
 } from "@/lib/pos.functions";
-import { lineTotal, type PosCartLine, type PosCustomer, type PosInvoiceFull } from "@/types/pos";
+import {
+  lineTotal,
+  unknownLineTotal,
+  type PosCartLine,
+  type PosCustomer,
+  type PosHeldInvoice,
+  type PosInvoiceFull,
+  type PosUnknownLine,
+} from "@/types/pos";
 
 export const Route = createFileRoute("/pos/")({
   head: () => ({
@@ -41,6 +57,7 @@ export const Route = createFileRoute("/pos/")({
 function CashierPage() {
   const pos = usePos();
   const [lines, setLines] = useState<PosCartLine[]>([]);
+  const [unknownLines, setUnknownLines] = useState<PosUnknownLine[]>([]);
   const [results, setResults] = useState<Omit<PosCartLine, "qty" | "discountPct" | "barcode">[]>([]);
   const [customer, setCustomer] = useState<PosCustomer | null>(null);
   const [customers, setCustomers] = useState<PosCustomer[]>([]);
@@ -49,10 +66,23 @@ function CashierPage() {
   const [payOpen, setPayOpen] = useState(false);
   const [lastInvoice, setLastInvoice] = useState<PosInvoiceFull | null>(null);
   const [pendingBarcode, setPendingBarcode] = useState<string | null>(null);
+  const [unknownBarcode, setUnknownBarcode] = useState<string | null>(null);
+  const [holdOpen, setHoldOpen] = useState(false);
+  const [held, setHeld] = useState<PosHeldInvoice[]>([]);
 
-  const subtotal = lines.reduce((sum, line) => sum + lineTotal(line), 0);
+  const subtotal =
+    lines.reduce((sum, line) => sum + lineTotal(line), 0) +
+    unknownLines.reduce((sum, line) => sum + unknownLineTotal(line), 0);
   const discount = Math.min(Number(invoiceDiscount) || 0, subtotal);
   const total = Math.round((subtotal - discount) * 100) / 100;
+  const isEmpty = lines.length === 0 && unknownLines.length === 0;
+
+  const clearCart = useCallback(() => {
+    setLines([]);
+    setUnknownLines([]);
+    setCustomer(null);
+    setInvoiceDiscount("0");
+  }, []);
 
   const addLine = (item: Omit<PosCartLine, "qty" | "discountPct" | "barcode"> & { barcode?: string | null }) => {
     setLines((current) => {
@@ -76,7 +106,7 @@ function CashierPage() {
       const hit = await posScanBarcode({ data: { storeId: pos.storeId, branchId: pos.branchId, barcode } });
       if (!hit.found) {
         setPendingBarcode(hit.barcode);
-        toast.error(`باركود غير معروف: ${hit.barcode} — ابحث بالاسم واربطه.`);
+        setUnknownBarcode(hit.barcode);
       } else {
         addLine(hit);
       }
@@ -94,6 +124,68 @@ function CashierPage() {
       if (found.length === 0) toast.info("مفيش نتائج بالاسم ده.");
     } catch {
       toast.error("البحث فشل.");
+    }
+    setBusy(false);
+  };
+
+  const refreshHeld = useCallback(async () => {
+    try {
+      setHeld(await posListHeldInvoices({ data: { storeId: pos.storeId } }));
+    } catch {
+      setHeld([]);
+    }
+  }, [pos.storeId]);
+
+  useEffect(() => {
+    void refreshHeld();
+  }, [refreshHeld]);
+
+  const holdCart = useCallback(async () => {
+    if (isEmpty || !pos.shift) return;
+    setBusy(true);
+    try {
+      const result = await posHoldCart({
+        data: {
+          storeId: pos.storeId,
+          branchId: pos.branchId,
+          shiftId: pos.shift.id,
+          customerId: customer?.id ?? null,
+          discountAmount: discount,
+          lines: lines.map((line) => ({
+            variantId: line.variantId,
+            productId: line.productId,
+            productName: line.productName,
+            unitLabel: line.unitLabel,
+            sellPrice: line.sellPrice,
+            costPrice: line.costPrice ?? null,
+            qty: line.qty,
+            discountPct: line.discountPct,
+            barcode: line.barcode ?? null,
+          })),
+          unknownLines,
+        },
+      });
+      clearCart();
+      await refreshHeld();
+      toast.success(`السلة اتعلّقت — ${result.invoiceNumber}`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "التعليق فشل.");
+    }
+    setBusy(false);
+  }, [clearCart, customer?.id, discount, isEmpty, lines, pos.branchId, pos.shift, pos.storeId, refreshHeld, unknownLines]);
+
+  const resumeInvoice = async (invoiceId: string) => {
+    setBusy(true);
+    try {
+      const resumed = await posResumeHeldInvoice({ data: { invoiceId } });
+      setLines(resumed.lines);
+      setUnknownLines(resumed.unknownLines);
+      setInvoiceDiscount(String(resumed.discountAmount ?? 0));
+      setHoldOpen(false);
+      await refreshHeld();
+      toast.success("السلة رجعت.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "الاسترجاع فشل.");
     }
     setBusy(false);
   };
@@ -124,14 +216,13 @@ function CashierPage() {
             discountPct: line.discountPct,
             barcode: line.barcode ?? null,
           })),
+          unknownLines,
           payments: payments.map((p) => ({ methodId: p.methodId, amount: p.amount })),
         },
       });
       const full = await posGetInvoice({ data: { invoiceId: result.invoiceId } });
       setLastInvoice(full);
-      setLines([]);
-      setCustomer(null);
-      setInvoiceDiscount("0");
+      clearCart();
       setPayOpen(false);
       toast.success(`تم البيع — ${result.invoiceNumber} · الباقي ${formatPrice(result.change)}`);
     } catch (error) {
@@ -140,10 +231,51 @@ function CashierPage() {
     setBusy(false);
   };
 
+  const printInvoice = async (invoiceId: string | null) => {
+    window.print();
+    try {
+      await posLogPrint({ data: { storeId: pos.storeId, invoiceId, documentType: "invoice_80mm" } });
+    } catch {
+      /* الطباعة نفسها نجحت — السجل مش حاجز. */
+    }
+  };
+
+  // اختصارات الكاشير: F2 دفع · F4 تعليق · F6 استرجاع · F8 تفريغ
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "F2" && !isEmpty && pos.shift) {
+        event.preventDefault();
+        setPayOpen(true);
+      } else if (event.key === "F4" && !isEmpty) {
+        event.preventDefault();
+        void holdCart();
+      } else if (event.key === "F6") {
+        event.preventDefault();
+        setHoldOpen(true);
+      } else if (event.key === "F8" && !isEmpty) {
+        event.preventDefault();
+        clearCart();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [clearCart, holdCart, isEmpty, pos.shift]);
+
   return (
     <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
       <section className="space-y-4">
-        <h1 className="text-2xl font-extrabold">الكاشير</h1>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h1 className="text-2xl font-extrabold">الكاشير</h1>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" disabled={isEmpty || busy} onClick={() => void holdCart()}>
+              <PauseCircle className="size-4" />
+              تعليق (F4)
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setHoldOpen(true)}>
+              معلّقة ({held.length})
+            </Button>
+          </div>
+        </div>
 
         <BarcodeScanner onScan={handleScan} onSearch={handleSearch} busy={busy} disabled={!pos.shift} />
 
@@ -201,6 +333,32 @@ function CashierPage() {
           }
           onRemove={(variantId) => setLines((current) => current.filter((line) => line.variantId !== variantId))}
         />
+
+        {unknownLines.length > 0 ? (
+          <ul className="divide-y divide-border rounded-lg border border-dashed border-border">
+            {unknownLines.map((line, index) => (
+              <li key={`${line.barcode}-${index}`} className="flex items-center justify-between gap-3 p-3">
+                <div>
+                  <p className="font-semibold">{line.name} · صنف غير مسجل</p>
+                  <p className="text-xs text-muted-foreground font-mono">{line.barcode}</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm tabular-nums">
+                    {line.qty} {line.unitLabel} · {formatPrice(unknownLineTotal(line))}
+                  </span>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    aria-label="حذف الصنف غير المسجل"
+                    onClick={() => setUnknownLines((current) => current.filter((_, i) => i !== index))}
+                  >
+                    <Trash2 className="size-4 text-destructive" />
+                  </Button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : null}
       </section>
 
       <aside className="space-y-4">
@@ -249,14 +407,14 @@ function CashierPage() {
 
           <Button
             className="h-14 w-full text-lg"
-            disabled={lines.length === 0 || busy || !pos.shift}
+            disabled={isEmpty || busy || !pos.shift}
             onClick={() => setPayOpen(true)}
           >
-            الدفع
+            الدفع (F2)
           </Button>
-          <Button variant="ghost" className="w-full" disabled={lines.length === 0} onClick={() => setLines([])}>
+          <Button variant="ghost" className="w-full" disabled={isEmpty} onClick={clearCart}>
             <Trash2 className="size-4" />
-            تفريغ السلة
+            تفريغ السلة (F8)
           </Button>
         </div>
 
@@ -264,7 +422,7 @@ function CashierPage() {
           <div className="space-y-2 rounded-lg border border-border p-3">
             <div className="flex items-center justify-between">
               <p className="text-sm font-semibold">آخر فاتورة: {lastInvoice.invoiceNumber}</p>
-              <Button size="sm" variant="outline" onClick={() => window.print()}>
+              <Button size="sm" variant="outline" onClick={() => void printInvoice(lastInvoice.id)}>
                 <Printer className="size-4" />
                 طباعة
               </Button>
@@ -282,6 +440,27 @@ function CashierPage() {
         busy={busy}
         onClose={() => setPayOpen(false)}
         onConfirm={checkout}
+      />
+
+      <UnknownBarcodeDialog
+        open={Boolean(unknownBarcode)}
+        barcode={unknownBarcode ?? ""}
+        busy={busy}
+        onClose={() => setUnknownBarcode(null)}
+        onSellManual={(line) => {
+          setUnknownLines((current) => [...current, line]);
+          setUnknownBarcode(null);
+          setPendingBarcode(null);
+          toast.success("الصنف اتضاف بسعر يدوي وهيتسجّل في تقرير المجهولات.");
+        }}
+      />
+
+      <HoldInvoiceDrawer
+        open={holdOpen}
+        invoices={held}
+        busy={busy}
+        onClose={() => setHoldOpen(false)}
+        onResume={(invoiceId) => void resumeInvoice(invoiceId)}
       />
     </div>
   );
