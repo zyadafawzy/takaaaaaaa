@@ -241,12 +241,26 @@ export function PosShell({
   );
 }
 
-function PosNavLink({ to, label, exact }: { to: string; label: string; exact: boolean }) {
+function PosNavLink({
+  to,
+  label,
+  exact,
+  params,
+}: {
+  to: string;
+  label: string;
+  exact: boolean;
+  params?: Record<string, string>;
+}) {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
-  const active = exact ? pathname === to : pathname.startsWith(to);
+  const resolved = params
+    ? Object.entries(params).reduce((acc, [key, val]) => acc.replaceAll(`$${key}`, val), to)
+    : to;
+  const active = exact ? pathname === resolved : pathname.startsWith(resolved);
   return (
     <Link
-      to={to}
+      to={to as never}
+      params={params as never}
       className={`whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
         active ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
       }`}
