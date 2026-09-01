@@ -70,6 +70,11 @@ export function CashierPage() {
   const [unknownBarcode, setUnknownBarcode] = useState<string | null>(null);
   const [holdOpen, setHoldOpen] = useState(false);
   const [held, setHeld] = useState<PosHeldInvoice[]>([]);
+  const [autoPrint, setAutoPrint] = useState(true);
+
+  useEffect(() => {
+    setAutoPrint(isAutoPrintEnabled());
+  }, []);
 
   const subtotal =
     lines.reduce((sum, line) => sum + lineTotal(line), 0) +
