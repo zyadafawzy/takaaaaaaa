@@ -340,7 +340,8 @@ export const posCheckout = createServerFn({ method: "POST" })
         discountAmount: z.number().min(0).max(1_000_000).default(0),
         taxAmount: z.number().min(0).max(1_000_000).default(0),
         notes: z.string().max(400).optional(),
-        lines: z.array(cartLineSchema).min(1).max(200),
+        lines: z.array(cartLineSchema).max(200).default([]),
+        unknownLines: z.array(unknownLineSchema).max(50).default([]),
         payments: z
           .array(z.object({ methodId: uuid, amount: z.number().gt(0).max(1_000_000), reference: z.string().max(60).optional() }))
           .max(5)
