@@ -210,15 +210,23 @@ export function PosShell({
               <RefreshCw className="size-4" />
               تحديث
             </Button>
-            <Button size="sm" variant="ghost" onClick={() => void supabase.auth.signOut()}>
-              <LogOut className="size-4" />
-              خروج
-            </Button>
+            {embedded ? null : (
+              <Button size="sm" variant="ghost" onClick={() => void supabase.auth.signOut()}>
+                <LogOut className="size-4" />
+                خروج
+              </Button>
+            )}
           </div>
 
           <nav className="mx-auto flex max-w-7xl gap-1 overflow-x-auto px-4 pb-2">
-            {NAV.map((item) => (
-              <PosNavLink key={item.to} to={item.to} label={item.label} exact={item.exact} />
+            {NAV_ITEMS.map((item) => (
+              <PosNavLink
+                key={item.suffix}
+                to={`${basePath}${item.suffix}`}
+                label={item.label}
+                exact={item.exact}
+                {...(linkParams ? { params: linkParams } : {})}
+              />
             ))}
           </nav>
         </header>
