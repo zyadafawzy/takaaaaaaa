@@ -144,9 +144,9 @@ export const salesCenter = createServerFn({ method: "POST" })
 
     if (invRes.error) throw new Error("SALES_CENTER_FAILED");
 
-    const rows = (invRes.data ?? []) as Array<Record<string, any>>;
+    const rows = (invRes.data ?? []) as any[];
     const refundByInvoice = new Map<string, number>();
-    for (const r of (refundRes.data ?? []) as Array<Record<string, any>>) {
+    for (const r of (refundRes.data ?? []) as any[]) {
       refundByInvoice.set(
         r.original_invoice_id as string,
         (refundByInvoice.get(r.original_invoice_id as string) ?? 0) + Number(r.amount),
@@ -168,7 +168,7 @@ export const salesCenter = createServerFn({ method: "POST" })
 
     for (const inv of rows) {
       const total = Number(inv.total ?? 0);
-      const payments = (inv.invoice_payments ?? []) as Array<Record<string, any>>;
+      const payments = (inv.invoice_payments ?? []) as any[];
       const paidFromPayments = payments.reduce((s, p) => s + Number(p.amount ?? 0), 0);
       const paid = Number(inv.paid_amount ?? 0) || paidFromPayments;
       const refunded = round2(refundByInvoice.get(inv.id as string) ?? 0);
@@ -223,7 +223,7 @@ export const salesCenter = createServerFn({ method: "POST" })
       hourBucket.invoices += 1;
       hourlyMap.set(hour, hourBucket);
 
-      for (const item of (inv.invoice_items ?? []) as Array<Record<string, any>>) {
+      for (const item of (inv.invoice_items ?? []) as any[]) {
         const name = (item.product_name_snapshot as string) ?? "منتج";
         const entry = productMap.get(name) ?? { qty: 0, revenue: 0 };
         entry.qty += Number(item.qty ?? 0);
@@ -238,7 +238,7 @@ export const salesCenter = createServerFn({ method: "POST" })
     }
 
     const refunds = round2(
-      ((refundRes.data ?? []) as Array<Record<string, any>>).reduce((s, r) => s + Number(r.amount ?? 0), 0),
+      ((refundRes.data ?? []) as any[]).reduce((s, r) => s + Number(r.amount ?? 0), 0),
     );
     const net = round2(gross - refunds);
     const confirmedCount = invoices.filter((i) => i.status === "confirmed").length;
@@ -255,7 +255,7 @@ export const salesCenter = createServerFn({ method: "POST" })
         cash: round2(cash),
         credit: round2(credit),
         collections: round2(
-          ((collectionsRes.data ?? []) as Array<Record<string, any>>).reduce(
+          ((collectionsRes.data ?? []) as any[]).reduce(
             (s, r) => s + Number(r.credit ?? 0),
             0,
           ),
@@ -263,7 +263,7 @@ export const salesCenter = createServerFn({ method: "POST" })
         refunds,
         waste: canSeeCost
           ? round2(
-              ((wasteRes.data ?? []) as Array<Record<string, any>>).reduce(
+              ((wasteRes.data ?? []) as any[]).reduce(
                 (s, r) => s + Number(r.cost_value ?? 0),
                 0,
               ),
@@ -320,8 +320,8 @@ export const salesInvoiceDetail = createServerFn({ method: "POST" })
       db.from("print_logs").select("id, document_type, printed_at").eq("invoice_id", data.invoiceId).limit(20),
     ]);
 
-    const row = inv as Record<string, any>;
-    const items = ((row.invoice_items ?? []) as Array<Record<string, any>>).map((i) => {
+    const row = inv as any;
+    const items = ((row.invoice_items ?? []) as any[]).map((i) => {
       const lineCost = i.cost_price_snapshot == null ? null : Number(i.cost_price_snapshot) * Number(i.qty);
       return {
         id: i.id as string,
@@ -341,11 +341,11 @@ export const salesInvoiceDetail = createServerFn({ method: "POST" })
       { at: row.created_at as string, label: "إنشاء الفاتورة" },
     ];
     if (row.confirmed_at) timeline.push({ at: row.confirmed_at as string, label: "اعتماد الفاتورة" });
-    for (const p of (row.invoice_payments ?? []) as Array<Record<string, any>>)
+    for (const p of (row.invoice_payments ?? []) as any[])
       timeline.push({ at: p.created_at as string, label: `دفعة ${Number(p.amount)} ج.م` });
-    for (const r of ((refunds.data ?? []) as Array<Record<string, any>>))
+    for (const r of ((refunds.data ?? []) as any[]))
       timeline.push({ at: r.created_at as string, label: `مرتجع/إلغاء ${Number(r.amount)} ج.م — ${r.reason ?? ""}` });
-    for (const p of ((prints.data ?? []) as Array<Record<string, any>>))
+    for (const p of ((prints.data ?? []) as any[]))
       timeline.push({ at: p.printed_at as string, label: `طباعة ${p.document_type}` });
     if (row.voided_at) timeline.push({ at: row.voided_at as string, label: `إلغاء: ${row.void_reason ?? ""}` });
     timeline.sort((a, b) => (a.at < b.at ? -1 : 1));
@@ -369,13 +369,13 @@ export const salesInvoiceDetail = createServerFn({ method: "POST" })
       paid: Number(row.paid_amount ?? 0),
       due: round2(Math.max(Number(row.total ?? 0) - Number(row.paid_amount ?? 0), 0)),
       items,
-      payments: ((row.invoice_payments ?? []) as Array<Record<string, any>>).map((p) => ({
+      payments: ((row.invoice_payments ?? []) as any[]).map((p) => ({
         id: p.id as string,
         amount: Number(p.amount),
         method: (p.payment_methods?.name as string) ?? "غير محدد",
         at: p.created_at as string,
       })),
-      refunds: ((refunds.data ?? []) as Array<Record<string, any>>).map((r) => ({
+      refunds: ((refunds.data ?? []) as any[]).map((r) => ({
         id: r.id as string,
         amount: Number(r.amount),
         reason: (r.reason as string) ?? "",
@@ -437,7 +437,7 @@ export const unpostedDeliveryOrders = createServerFn({ method: "POST" })
       .order("created_at", { ascending: false })
       .limit(100);
 
-    return ((rows ?? []) as Array<Record<string, any>>).map((r) => ({
+    return ((rows ?? []) as any[]).map((r) => ({
       id: r.id as string,
       orderNumber: (r.order_number as string) ?? "—",
       createdAt: r.created_at as string,
