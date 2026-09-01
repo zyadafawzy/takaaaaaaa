@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.pos_is_store_owner(uuid, uuid) FROM authenticated;
