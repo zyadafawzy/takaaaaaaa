@@ -69,6 +69,7 @@ import { Route as SStoreSlugAdminDeliveryRouteImport } from './routes/s.$storeSl
 import { Route as SStoreSlugAdminOrdersRouteImport } from './routes/s.$storeSlug.admin.orders'
 import { Route as SStoreSlugAdminPosRouteImport } from './routes/s.$storeSlug.admin.pos'
 import { Route as SStoreSlugAdminReportsRouteImport } from './routes/s.$storeSlug.admin.reports'
+import { Route as SStoreSlugAdminSalesRouteImport } from './routes/s.$storeSlug.admin.sales'
 import { Route as SStoreSlugAdminSettingsRouteImport } from './routes/s.$storeSlug.admin.settings'
 import { Route as SStoreSlugAdminTeamRouteImport } from './routes/s.$storeSlug.admin.team'
 import { Route as SStoreSlugAdminThemeRouteImport } from './routes/s.$storeSlug.admin.theme'
@@ -387,6 +388,11 @@ const SStoreSlugAdminReportsRoute = SStoreSlugAdminReportsRouteImport.update({
   path: '/reports',
   getParentRoute: () => SStoreSlugAdminRoute,
 } as any)
+const SStoreSlugAdminSalesRoute = SStoreSlugAdminSalesRouteImport.update({
+  id: '/sales',
+  path: '/sales',
+  getParentRoute: () => SStoreSlugAdminRoute,
+} as any)
 const SStoreSlugAdminSettingsRoute = SStoreSlugAdminSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -537,6 +543,7 @@ export interface FileRoutesByFullPath {
   '/s/$storeSlug/admin/orders': typeof SStoreSlugAdminOrdersRoute
   '/s/$storeSlug/admin/pos': typeof SStoreSlugAdminPosRouteWithChildren
   '/s/$storeSlug/admin/reports': typeof SStoreSlugAdminReportsRoute
+  '/s/$storeSlug/admin/sales': typeof SStoreSlugAdminSalesRoute
   '/s/$storeSlug/admin/settings': typeof SStoreSlugAdminSettingsRoute
   '/s/$storeSlug/admin/team': typeof SStoreSlugAdminTeamRoute
   '/s/$storeSlug/admin/theme': typeof SStoreSlugAdminThemeRoute
@@ -609,6 +616,7 @@ export interface FileRoutesByTo {
   '/s/$storeSlug/admin/delivery': typeof SStoreSlugAdminDeliveryRoute
   '/s/$storeSlug/admin/orders': typeof SStoreSlugAdminOrdersRoute
   '/s/$storeSlug/admin/reports': typeof SStoreSlugAdminReportsRoute
+  '/s/$storeSlug/admin/sales': typeof SStoreSlugAdminSalesRoute
   '/s/$storeSlug/admin/settings': typeof SStoreSlugAdminSettingsRoute
   '/s/$storeSlug/admin/team': typeof SStoreSlugAdminTeamRoute
   '/s/$storeSlug/admin/theme': typeof SStoreSlugAdminThemeRoute
@@ -688,6 +696,7 @@ export interface FileRoutesById {
   '/s/$storeSlug/admin/orders': typeof SStoreSlugAdminOrdersRoute
   '/s/$storeSlug/admin/pos': typeof SStoreSlugAdminPosRouteWithChildren
   '/s/$storeSlug/admin/reports': typeof SStoreSlugAdminReportsRoute
+  '/s/$storeSlug/admin/sales': typeof SStoreSlugAdminSalesRoute
   '/s/$storeSlug/admin/settings': typeof SStoreSlugAdminSettingsRoute
   '/s/$storeSlug/admin/team': typeof SStoreSlugAdminTeamRoute
   '/s/$storeSlug/admin/theme': typeof SStoreSlugAdminThemeRoute
@@ -768,6 +777,7 @@ export interface FileRouteTypes {
     | '/s/$storeSlug/admin/orders'
     | '/s/$storeSlug/admin/pos'
     | '/s/$storeSlug/admin/reports'
+    | '/s/$storeSlug/admin/sales'
     | '/s/$storeSlug/admin/settings'
     | '/s/$storeSlug/admin/team'
     | '/s/$storeSlug/admin/theme'
@@ -840,6 +850,7 @@ export interface FileRouteTypes {
     | '/s/$storeSlug/admin/delivery'
     | '/s/$storeSlug/admin/orders'
     | '/s/$storeSlug/admin/reports'
+    | '/s/$storeSlug/admin/sales'
     | '/s/$storeSlug/admin/settings'
     | '/s/$storeSlug/admin/team'
     | '/s/$storeSlug/admin/theme'
@@ -918,6 +929,7 @@ export interface FileRouteTypes {
     | '/s/$storeSlug/admin/orders'
     | '/s/$storeSlug/admin/pos'
     | '/s/$storeSlug/admin/reports'
+    | '/s/$storeSlug/admin/sales'
     | '/s/$storeSlug/admin/settings'
     | '/s/$storeSlug/admin/team'
     | '/s/$storeSlug/admin/theme'
@@ -1384,6 +1396,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SStoreSlugAdminReportsRouteImport
       parentRoute: typeof SStoreSlugAdminRoute
     }
+    '/s/$storeSlug/admin/sales': {
+      id: '/s/$storeSlug/admin/sales'
+      path: '/sales'
+      fullPath: '/s/$storeSlug/admin/sales'
+      preLoaderRoute: typeof SStoreSlugAdminSalesRouteImport
+      parentRoute: typeof SStoreSlugAdminRoute
+    }
     '/s/$storeSlug/admin/settings': {
       id: '/s/$storeSlug/admin/settings'
       path: '/settings'
@@ -1635,6 +1654,7 @@ interface SStoreSlugAdminRouteChildren {
   SStoreSlugAdminOrdersRoute: typeof SStoreSlugAdminOrdersRoute
   SStoreSlugAdminPosRoute: typeof SStoreSlugAdminPosRouteWithChildren
   SStoreSlugAdminReportsRoute: typeof SStoreSlugAdminReportsRoute
+  SStoreSlugAdminSalesRoute: typeof SStoreSlugAdminSalesRoute
   SStoreSlugAdminSettingsRoute: typeof SStoreSlugAdminSettingsRoute
   SStoreSlugAdminTeamRoute: typeof SStoreSlugAdminTeamRoute
   SStoreSlugAdminThemeRoute: typeof SStoreSlugAdminThemeRoute
@@ -1648,6 +1668,7 @@ const SStoreSlugAdminRouteChildren: SStoreSlugAdminRouteChildren = {
   SStoreSlugAdminOrdersRoute: SStoreSlugAdminOrdersRoute,
   SStoreSlugAdminPosRoute: SStoreSlugAdminPosRouteWithChildren,
   SStoreSlugAdminReportsRoute: SStoreSlugAdminReportsRoute,
+  SStoreSlugAdminSalesRoute: SStoreSlugAdminSalesRoute,
   SStoreSlugAdminSettingsRoute: SStoreSlugAdminSettingsRoute,
   SStoreSlugAdminTeamRoute: SStoreSlugAdminTeamRoute,
   SStoreSlugAdminThemeRoute: SStoreSlugAdminThemeRoute,
