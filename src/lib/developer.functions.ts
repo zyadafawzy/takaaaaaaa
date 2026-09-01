@@ -220,6 +220,7 @@ export const developerCreateStore = createServerFn({ method: "POST" })
         branding: brandingSchema,
         productIds: z.array(z.string().uuid()).max(5000).default([]),
         zones: z.array(zoneSchema).max(300).default([]),
+        adminUsername: z.string().trim().toLowerCase().regex(/^[a-z0-9][a-z0-9_-]{2,31}$/),
         adminPassword: z.string().min(4).max(72).optional(),
         logo: logoSchema.optional(),
       })
@@ -256,6 +257,16 @@ export const developerCreateStore = createServerFn({ method: "POST" })
 
     if (error || !created) {
       throw new Error(error?.code === "23505" ? "SLUG_TAKEN" : "STORE_CREATE_FAILED");
+    }
+
+    if (data.adminPassword) {
+      const { provisionStoreMemberAccount } = await import("./store-session.server");
+      await provisionStoreMemberAccount(created.id, created.slug, {
+        username: data.adminUsername,
+        password: data.adminPassword,
+        fullName: data.store.ownerName || "صاحب المتجر",
+        tier: "owner",
+      });
     }
 
     await supabaseAdmin.from("store_branding").upsert(brandingRow(created.id, data.branding) as never);

@@ -42,7 +42,7 @@ function StoreAdminTeam() {
     retry: false,
   });
 
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [fullName, setFullName] = useState("");
   const [password, setPassword] = useState("");
   const [tier, setTier] = useState<"owner" | "manager" | "cashier">("cashier");
@@ -55,23 +55,21 @@ function StoreAdminTeam() {
       storeAdminAddMember({
         data: {
           storeSlug,
-          email: email.trim().toLowerCase(),
+          username: username.trim().toLowerCase(),
           fullName: fullName.trim(),
           tier,
-          password: password.trim() ? password.trim() : undefined,
+          password: password.trim(),
         },
       }),
     onSuccess: async () => {
-      setEmail("");
+      setUsername("");
       setFullName("");
       setPassword("");
       await invalidate();
       toast.success("تم إضافة العضو للفريق");
     },
     onError: (error: Error) => {
-      if (error.message.includes("PASSWORD_REQUIRED"))
-        toast.error("الحساب مش موجود — اكتب كلمة مرور مبدئية عشان ننشئه");
-      else if (error.message.includes("FORBIDDEN")) toast.error("مدير المتجر بس اللي يقدر يضيف");
+      if (error.message.includes("FORBIDDEN")) toast.error("صاحب المتجر بس اللي يقدر يدير الفريق");
       else toast.error("مقدرناش نضيف العضو");
     },
   });
@@ -108,7 +106,7 @@ function StoreAdminTeam() {
           <UserPlus className="size-5" /> إضافة عضو للفريق
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          لو الإيميل عنده حساب هيتضاف على طول، ولو جديد اكتب كلمة مرور مبدئية.
+          أنشئ حساب دخول مستقل وحدد دوره. اسم المستخدم بيشتغل داخل المتجر ده فقط.
         </p>
         <form
           className="mt-4 grid gap-3 md:grid-cols-5"
@@ -118,14 +116,15 @@ function StoreAdminTeam() {
           }}
         >
           <div className="md:col-span-2">
-            <Label htmlFor="member-email">الإيميل</Label>
+            <Label htmlFor="member-username">اسم المستخدم</Label>
             <Input
-              id="member-email"
-              type="email"
+              id="member-username"
               dir="ltr"
+              pattern="[a-z0-9][a-z0-9_-]{2,31}"
+              placeholder="مثال: cashier1"
               required
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
+              value={username}
+              onChange={(event) => setUsername(event.target.value.toLowerCase())}
               className="mt-1"
             />
           </div>
@@ -147,6 +146,8 @@ function StoreAdminTeam() {
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               className="mt-1"
+              minLength={8}
+              required
             />
           </div>
           <div>
@@ -182,9 +183,9 @@ function StoreAdminTeam() {
               className="flex flex-wrap items-center gap-3 rounded-xl border border-border p-3"
             >
               <div className="min-w-40">
-                <p className="font-bold">{member.full_name || member.email}</p>
+                <p className="font-bold">{member.full_name || member.username}</p>
                 <p className="text-xs text-muted-foreground" dir="ltr">
-                  {member.email}
+                  @{member.username}
                 </p>
               </div>
               <Select
