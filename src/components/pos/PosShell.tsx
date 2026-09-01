@@ -35,6 +35,8 @@ const NAV = [
   { to: "/pos/suppliers", label: "الموردون", exact: false },
   { to: "/pos/purchases", label: "المشتريات", exact: false },
   { to: "/pos/inventory", label: "المخزون", exact: false },
+  { to: "/pos/unknown", label: "أصناف مجهولة", exact: false },
+  { to: "/pos/damaged", label: "هوالك وتالف", exact: false },
   { to: "/pos/reports", label: "التقارير", exact: false },
   { to: "/pos/settings", label: "الإعدادات", exact: false },
 ] as const;
