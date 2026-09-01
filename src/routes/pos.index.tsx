@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { formatPrice } from "@/lib/format";
+import { isAutoPrintEnabled, printReceipt, setAutoPrintEnabled } from "@/lib/pos-print";
 import {
   posHoldCart,
   posListHeldInvoices,
