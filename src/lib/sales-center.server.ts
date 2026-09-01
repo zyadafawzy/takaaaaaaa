@@ -63,3 +63,27 @@ export function toCsv(rows: Array<Record<string, unknown>>): string {
   const escape = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
   return [headers.join(","), ...rows.map((r) => headers.map((h) => escape(r[h])).join(","))].join("\n");
 }
+
+/** صلاحية المستخدم على المتجر + هل يرى التكلفة/الربح. */
+export async function resolveStoreAccess(supabase: unknown, userId: string, storeSlug: string) {
+  const { requireStoreAccess } = await import("./store-admin.server");
+  const access = await requireStoreAccess(supabase as never, userId, storeSlug);
+  const db = await looseAdmin();
+
+  const { data: posMember } = await db
+    .from("pos_members")
+    .select("role")
+    .eq("store_id", access.storeId)
+    .eq("user_id", userId)
+    .eq("is_active", true)
+    .maybeSingle();
+
+  const posRole = (posMember?.role as string | undefined) ?? null;
+  const privileged =
+    access.role === "platform_owner" ||
+    access.role === "store_admin" ||
+    posRole === "store_owner" ||
+    posRole === "branch_manager";
+
+  return { access, db, posRole, canSeeCost: privileged, canManage: privileged };
+}
