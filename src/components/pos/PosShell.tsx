@@ -77,20 +77,37 @@ export function PosShell({
       }
       setSignedIn(true);
       try {
-        const result = await posBootstrap({ data: nextStoreId ? { storeId: nextStoreId } : {} });
+        let result = await posBootstrap({ data: nextStoreId ? { storeId: nextStoreId } : {} });
+        let active = nextStoreId ?? result.memberships[0]?.storeId ?? null;
+
+        // نسخة جوّه لوحة متجر: نلتزم بمتجر المسار بس.
+        if (!nextStoreId && storeSlug) {
+          const scoped = result.memberships.find((m) => m.storeSlug === storeSlug);
+          if (!scoped) {
+            setBoot(result);
+            setStoreId(null);
+            setReady(true);
+            return;
+          }
+          if (scoped.storeId !== active) {
+            result = await posBootstrap({ data: { storeId: scoped.storeId } });
+          }
+          active = scoped.storeId;
+        }
+
         setBoot(result);
-        const active = nextStoreId ?? result.memberships[0]?.storeId ?? null;
         setStoreId(active);
+        const loaded = result;
         setBranchId((current) => {
-          if (current && result.branches.some((b) => b.id === current)) return current;
-          return result.openShift?.branchId ?? result.branches[0]?.id ?? null;
+          if (current && loaded.branches.some((b) => b.id === current)) return current;
+          return loaded.openShift?.branchId ?? loaded.branches[0]?.id ?? null;
         });
       } catch {
         toast.error("مقدرناش نحمّل بيانات نقاط البيع.");
       }
       setReady(true);
     },
-    [],
+    [storeSlug],
   );
 
   useEffect(() => {
