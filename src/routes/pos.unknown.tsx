@@ -23,7 +23,7 @@ export const Route = createFileRoute("/pos/unknown")({
   component: UnknownScansPage,
 });
 
-function UnknownScansPage() {
+export function UnknownScansPage() {
   const pos = usePos();
   const [groups, setGroups] = useState<PosUnknownGroup[]>([]);
   const [busy, setBusy] = useState(false);

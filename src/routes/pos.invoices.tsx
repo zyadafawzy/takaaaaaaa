@@ -33,7 +33,7 @@ const STATUS_LABELS: Record<PosInvoiceSummary["status"], string> = {
   refunded: "مرتجعة",
 };
 
-function InvoicesPage() {
+export function InvoicesPage() {
   const pos = usePos();
   const [rows, setRows] = useState<PosInvoiceSummary[]>([]);
   const [selected, setSelected] = useState<PosInvoiceFull | null>(null);

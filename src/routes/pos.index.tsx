@@ -54,7 +54,7 @@ export const Route = createFileRoute("/pos/")({
   component: CashierPage,
 });
 
-function CashierPage() {
+export function CashierPage() {
   const pos = usePos();
   const [lines, setLines] = useState<PosCartLine[]>([]);
   const [unknownLines, setUnknownLines] = useState<PosUnknownLine[]>([]);

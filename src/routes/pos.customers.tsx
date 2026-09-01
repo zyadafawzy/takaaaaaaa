@@ -31,7 +31,7 @@ export const Route = createFileRoute("/pos/customers")({
 
 type LedgerRow = Awaited<ReturnType<typeof posCustomerLedger>>[number];
 
-function CustomersPage() {
+export function CustomersPage() {
   const pos = usePos();
   const [rows, setRows] = useState<PosCustomer[]>([]);
   const [query, setQuery] = useState("");

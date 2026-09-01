@@ -26,7 +26,7 @@ export const Route = createFileRoute("/pos/inventory")({
 type Row = Awaited<ReturnType<typeof posInventory>>[number];
 type Alert = Awaited<ReturnType<typeof posStockAlerts>>[number];
 
-function InventoryPage() {
+export function InventoryPage() {
   const pos = usePos();
   const [rows, setRows] = useState<Row[]>([]);
   const [alerts, setAlerts] = useState<Alert[]>([]);

@@ -26,7 +26,7 @@ export const Route = createFileRoute("/pos/settings")({
 
 type UnknownScan = Awaited<ReturnType<typeof posUnknownScans>>[number];
 
-function SettingsPage() {
+export function SettingsPage() {
   const pos = usePos();
   const [scans, setScans] = useState<UnknownScan[]>([]);
   const [activeBarcode, setActiveBarcode] = useState<string | null>(null);

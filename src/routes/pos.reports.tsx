@@ -29,7 +29,7 @@ function todayCairo(): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Cairo" }).format(new Date());
 }
 
-function ReportsPage() {
+export function ReportsPage() {
   const pos = usePos();
   const today = todayCairo();
   const [dateFrom, setDateFrom] = useState(today);
