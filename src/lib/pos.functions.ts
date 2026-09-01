@@ -353,6 +353,9 @@ export const posCheckout = createServerFn({ method: "POST" })
     const { requireStoreRole, ROLE_WRITE, round2 } = await import("./pos.server");
     await requireStoreRole(context.supabase, context.userId, data.storeId, ROLE_WRITE);
 
+    if (data.lines.length === 0 && data.unknownLines.length === 0) throw new Error("CART_EMPTY");
+
+
     const { data: shift } = await context.supabase
       .from("cash_shifts")
       .select("id, status, store_id")
