@@ -424,6 +424,19 @@ export function CashierPage() {
           </Button>
         </div>
 
+        <label className="flex items-center justify-between rounded-lg border border-border p-3 text-sm">
+          <span className="font-semibold">طباعة الفاتورة تلقائيًا بعد الدفع</span>
+          <input
+            type="checkbox"
+            className="size-4 accent-primary"
+            defaultChecked={autoPrint}
+            onChange={(event) => {
+              setAutoPrintEnabled(event.target.checked);
+              setAutoPrint(event.target.checked);
+            }}
+          />
+        </label>
+
         {lastInvoice ? (
           <div className="space-y-2 rounded-lg border border-border p-3">
             <div className="flex items-center justify-between">
@@ -436,6 +449,7 @@ export function CashierPage() {
             <InvoicePrint invoice={lastInvoice} storeName={pos.storeName} />
           </div>
         ) : null}
+
       </aside>
 
       <PaymentModal
