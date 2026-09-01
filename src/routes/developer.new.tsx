@@ -68,6 +68,7 @@ function CreateStoreWizard() {
   const [zones, setZones] = useState<ZoneDraft[]>([]);
   const [plan, setPlan] = useState<StorePlanId>("pro");
   const [features, setFeatures] = useState<StoreFeatureMap>(() => featuresForPlan("pro"));
+  const [adminUsername, setAdminUsername] = useState("owner");
   const [adminPassword, setAdminPassword] = useState("");
   const [isMaintenance, setIsMaintenance] = useState(false);
   const [maintenanceMessage, setMaintenanceMessage] = useState("المتجر تحت الصيانة، هنرجع قريب جدًا 🌿");
@@ -102,7 +103,8 @@ function CreateStoreWizard() {
           branding,
           productIds: Array.from(selected),
           zones,
-          ...(adminPassword.trim().length >= 4 ? { adminPassword: adminPassword.trim() } : {}),
+          adminUsername: adminUsername.trim().toLowerCase(),
+          adminPassword: adminPassword.trim(),
           ...(logo ? { logo: { fileName: logo.fileName, contentType: logo.contentType, base64: logo.base64 } } : {}),
         },
       }),
@@ -451,6 +453,17 @@ function CreateStoreWizard() {
 
             <div className="grid gap-4 rounded-2xl border border-border bg-background p-4 md:grid-cols-2">
               <div className="space-y-1.5">
+                <Label htmlFor="admin-username">اسم مستخدم صاحب المتجر</Label>
+                <Input
+                  id="admin-username"
+                  value={adminUsername}
+                  onChange={(event) => setAdminUsername(event.target.value.toLowerCase())}
+                  dir="ltr"
+                  pattern="[a-z0-9][a-z0-9_-]{2,31}"
+                  placeholder="owner"
+                />
+              </div>
+              <div className="space-y-1.5">
                 <Label htmlFor="admin-pass">كلمة سر لوحة تحكم المتجر</Label>
                 <Input
                   id="admin-pass"
@@ -458,10 +471,11 @@ function CreateStoreWizard() {
                   value={adminPassword}
                   onChange={(event) => setAdminPassword(event.target.value)}
                   dir="ltr"
-                  placeholder="4 حروف على الأقل"
+                  placeholder="8 حروف على الأقل"
+                  minLength={8}
                 />
                 <p className="text-[11px] text-muted-foreground">
-                  صاحب المتجر بيدخل على /s/{slug || "..."}/admin ويكتب الكلمة دي بس — من غير إيميل.
+                  الدخول من /s/{slug || "..."}/admin باسم المستخدم وكلمة المرور.
                 </p>
               </div>
               <div className="space-y-2">
@@ -496,6 +510,7 @@ function CreateStoreWizard() {
                 ["عدد المنتجات", String(selected.size)],
                 ["مناطق التوصيل", String(zones.length)],
                 ["الباقة", plan],
+                ["اسم مستخدم المالك", adminUsername || "—"],
                 ["كلمة سر اللوحة", adminPassword ? "تم ضبطها" : "—"],
                 ["الصيانة", isMaintenance ? "مفعّلة" : "مقفولة"],
               ].map(([label, value]) => (
@@ -530,7 +545,7 @@ function CreateStoreWizard() {
         ) : (
           <Button
             className="ms-auto gap-1.5"
-            disabled={!identityValid || create.isPending}
+            disabled={!identityValid || adminUsername.length < 3 || adminPassword.length < 8 || create.isPending}
             onClick={() => create.mutate()}
           >
             {create.isPending ? (

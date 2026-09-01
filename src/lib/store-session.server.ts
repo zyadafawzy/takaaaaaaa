@@ -1,59 +1,74 @@
-/**
- * جلسة إدارة المتجر: الدخول بكلمة سر واحدة بيصدر جلسة Supabase حقيقية
- * لحساب إدارة مخصّص للمتجر، عشان كل نداءات اللوحة تتحقق على الخادم ومعزولة بالمتجر.
- */
+/** حسابات فريق المتجر تستخدم بريدًا داخليًا مشتقًا من المتجر واسم المستخدم. */
 
 const DOMAIN = "store-admin.tekka.local";
 
-function storeAdminEmail(slug: string): string {
-  const safe = slug.toLowerCase().replace(/[^a-z0-9-]/g, "-");
-  return `store-${safe}@${DOMAIN}`;
+export function normalizeStoreUsername(value: string): string {
+  return value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "");
 }
 
-function randomPassword(): string {
-  const bytes = new Uint8Array(24);
-  crypto.getRandomValues(bytes);
-  return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+export function storeMemberEmail(slug: string, username: string): string {
+  const safeSlug = slug.toLowerCase().replace(/[^a-z0-9-]/g, "-");
+  const safeUsername = normalizeStoreUsername(username);
+  return `${safeUsername}.store-${safeSlug}@${DOMAIN}`;
 }
 
-export async function issueStoreAdminSession(
+export async function provisionStoreMemberAccount(
   storeId: string,
   storeSlug: string,
-): Promise<{ email: string; password: string } | null> {
+  input: {
+    username: string;
+    password: string;
+    fullName: string;
+    tier: "owner" | "manager" | "cashier";
+  },
+): Promise<{ userId: string; email: string }> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const email = storeAdminEmail(storeSlug);
-  const password = randomPassword();
+  const email = storeMemberEmail(storeSlug, input.username);
+  const roles = {
+    owner: { store: "store_admin" as const, pos: "store_owner" as const },
+    manager: { store: "store_admin" as const, pos: "branch_manager" as const },
+    cashier: { store: "store_staff" as const, pos: "cashier" as const },
+  };
+  const role = roles[input.tier];
 
-  // 1) تأكد إن حساب إدارة المتجر موجود (وبكلمة مرور مؤقتة متجدّدة كل دخول).
   let userId: string | null = null;
   const created = await supabaseAdmin.auth.admin.createUser({
     email,
-    password,
+    password: input.password,
     email_confirm: true,
-    user_metadata: { store_slug: storeSlug, kind: "store_admin" },
+    user_metadata: {
+      full_name: input.fullName,
+      store_slug: storeSlug,
+      store_username: normalizeStoreUsername(input.username),
+      kind: "store_member",
+    },
   });
 
   if (created.data.user) {
     userId = created.data.user.id;
   } else {
-    // موجود قبل كده — دوّر عليه وجدّد كلمة المرور المؤقتة.
     for (let page = 1; page <= 20 && !userId; page += 1) {
       const list = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 200 });
       const match = list.data.users.find((user) => user.email === email);
       if (match) userId = match.id;
       if (list.data.users.length < 200) break;
     }
-    if (!userId) return null;
+    if (!userId) throw new Error("CREATE_USER_FAILED");
     const updated = await supabaseAdmin.auth.admin.updateUserById(userId, {
-      password,
+      password: input.password,
       email_confirm: true,
+      user_metadata: {
+        full_name: input.fullName,
+        store_slug: storeSlug,
+        store_username: normalizeStoreUsername(input.username),
+        kind: "store_member",
+      },
     });
-    if (updated.error) return null;
+    if (updated.error) throw new Error("CREATE_USER_FAILED");
   }
 
-  if (!userId) return null;
+  if (!userId) throw new Error("CREATE_USER_FAILED");
 
-  // 2) اربطه بالمتجر كمسؤول (لو مش مربوط).
   const existing = await supabaseAdmin
     .from("store_users")
     .select("id, active, role")
@@ -62,24 +77,23 @@ export async function issueStoreAdminSession(
     .maybeSingle();
 
   if (existing.data) {
-    if (!existing.data.active || existing.data.role !== "store_admin") {
-      await supabaseAdmin
-        .from("store_users")
-        .update({ active: true, role: "store_admin" })
-        .eq("id", existing.data.id);
-    }
+    const saved = await supabaseAdmin
+      .from("store_users")
+      .update({ active: true, role: role.store, email, full_name: input.fullName })
+      .eq("id", existing.data.id);
+    if (saved.error) throw new Error("SAVE_FAILED");
   } else {
-    await supabaseAdmin.from("store_users").insert({
+    const saved = await supabaseAdmin.from("store_users").insert({
       store_id: storeId,
       user_id: userId,
       email,
-      full_name: "إدارة المتجر",
-      role: "store_admin",
+      full_name: input.fullName,
+      role: role.store,
       active: true,
     });
+    if (saved.error) throw new Error("SAVE_FAILED");
   }
 
-  // 3) صلاحية الكاشير لهذا المتجر فقط — من غير أي وصول لمتاجر تانية.
   const posMember = await supabaseAdmin
     .from("pos_members")
     .select("id, is_active, role")
@@ -88,20 +102,20 @@ export async function issueStoreAdminSession(
     .maybeSingle();
 
   if (posMember.data) {
-    if (!posMember.data.is_active || posMember.data.role !== "store_owner") {
-      await supabaseAdmin
-        .from("pos_members")
-        .update({ is_active: true, role: "store_owner" })
-        .eq("id", posMember.data.id);
-    }
+    const saved = await supabaseAdmin
+      .from("pos_members")
+      .update({ is_active: true, role: role.pos })
+      .eq("id", posMember.data.id);
+    if (saved.error) throw new Error("SAVE_FAILED");
   } else {
-    await supabaseAdmin.from("pos_members").insert({
+    const saved = await supabaseAdmin.from("pos_members").insert({
       store_id: storeId,
       user_id: userId,
-      role: "store_owner",
+      role: role.pos,
       is_active: true,
     });
+    if (saved.error) throw new Error("SAVE_FAILED");
   }
 
-  return { email, password };
+  return { userId, email };
 }

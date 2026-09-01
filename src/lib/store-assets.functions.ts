@@ -4,33 +4,55 @@ import { storeSlugInput } from "./store-admin.schemas";
 
 export const storeAdminLoginByPassword = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) =>
-    storeSlugInput.extend({ password: z.string().min(1) }).parse(input),
+    storeSlugInput
+      .extend({
+        username: z.string().regex(/^[a-zA-Z0-9_-]{3,32}$/),
+        password: z.string().min(1).max(72),
+      })
+      .parse(input),
   )
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { storeMemberEmail } = await import("./store-session.server");
 
     const { data: store, error } = await supabaseAdmin
       .from("stores")
-      .select("id, slug, name, admin_password_hash")
+      .select("id, slug, owner_name, admin_password_hash")
       .eq("slug", data.storeSlug)
       .maybeSingle();
 
-    if (error || !store || !store.admin_password_hash) {
+    if (error || !store) {
       return { ok: false as const, error: "INVALID" };
     }
 
-    const { createHash } = await import("node:crypto");
-    const hash = createHash("sha256").update(data.password).digest("hex");
-    const matches =
-      store.admin_password_hash === data.password || store.admin_password_hash === hash;
-    if (!matches) return { ok: false as const, error: "INVALID" };
+    const email = storeMemberEmail(store.slug, data.username);
+    const { data: member } = await supabaseAdmin
+      .from("store_users")
+      .select("id")
+      .eq("store_id", store.id)
+      .eq("email", email)
+      .eq("active", true)
+      .maybeSingle();
+    if (!member) {
+      if (data.username.toLowerCase() !== "owner" || !store.admin_password_hash) {
+        return { ok: false as const, error: "INVALID" };
+      }
+      const { createHash } = await import("node:crypto");
+      const hash = createHash("sha256").update(data.password).digest("hex");
+      const matches =
+        store.admin_password_hash === data.password || store.admin_password_hash === hash;
+      if (!matches) return { ok: false as const, error: "INVALID" };
 
-    // حساب إدارة مخصّص للمتجر — عشان كل نداءات اللوحة تشتغل بجلسة حقيقية ومعزولة.
-    const { issueStoreAdminSession } = await import("./store-session.server");
-    const session = await issueStoreAdminSession(store.id, store.slug);
-    if (!session) return { ok: false as const, error: "SESSION_FAILED" };
+      const { provisionStoreMemberAccount } = await import("./store-session.server");
+      await provisionStoreMemberAccount(store.id, store.slug, {
+        username: "owner",
+        password: data.password,
+        fullName: store.owner_name || "صاحب المتجر",
+        tier: "owner",
+      });
+    }
 
-    return { ok: true as const, email: session.email, password: session.password };
+    return { ok: true as const, email };
   });
 
 export const generateStoreAIAsset = createServerFn({ method: "POST" })

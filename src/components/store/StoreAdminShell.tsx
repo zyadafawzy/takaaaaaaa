@@ -76,6 +76,7 @@ export function useStoreSession(storeSlug: string) {
 }
 
 export function StoreAdminLogin({ storeSlug, storeName }: { storeSlug: string; storeName: string }) {
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -95,14 +96,14 @@ export function StoreAdminLogin({ storeSlug, storeName }: { storeSlug: string; s
 
           try {
             const { storeAdminLoginByPassword } = await import("@/lib/store-assets.functions");
-            const result = await storeAdminLoginByPassword({ data: { storeSlug, password } });
+            const result = await storeAdminLoginByPassword({ data: { storeSlug, username, password } });
 
-            if (result.ok && result.password) {
+            if (result.ok) {
               const { supabase } = await import("@/integrations/supabase/client");
               await supabase.auth.signOut();
               const { error: signInError } = await supabase.auth.signInWithPassword({
                 email: result.email,
-                password: result.password,
+                password,
               });
               if (signInError) {
                 setError("حصلت مشكلة في تجهيز الجلسة، جرّب تاني");
@@ -111,7 +112,7 @@ export function StoreAdminLogin({ storeSlug, storeName }: { storeSlug: string; s
                 window.location.reload();
               }
             } else {
-              setError("كلمة المرور غلط");
+              setError("اسم المستخدم أو كلمة المرور غلط");
             }
           } catch {
             setError("حصلت مشكلة في الدخول");
@@ -125,16 +126,31 @@ export function StoreAdminLogin({ storeSlug, storeName }: { storeSlug: string; s
         </div>
         <h1 className="mt-4 text-center text-xl font-extrabold">لوحة {storeName}</h1>
         <p className="mt-1 text-center text-sm text-muted-foreground">
-          اكتب كلمة مرور الإدارة للدخول.
+          ادخل باسم المستخدم وكلمة المرور الخاصة بحسابك.
         </p>
 
         <div className="mt-6 space-y-3">
           <div>
-            <Label htmlFor="store-admin-password">كلمة مرور الإدارة</Label>
+            <Label htmlFor="store-admin-username">اسم المستخدم</Label>
+            <Input
+              id="store-admin-username"
+              dir="ltr"
+              autoComplete="username"
+              value={username}
+              onChange={(event) => setUsername(event.target.value.toLowerCase())}
+              className="mt-1 h-11 rounded-xl"
+              placeholder="مثال: owner"
+              pattern="[A-Za-z0-9_-]{3,32}"
+              required
+            />
+          </div>
+          <div>
+            <Label htmlFor="store-admin-password">كلمة المرور</Label>
             <Input
               id="store-admin-password"
               type="password"
               dir="ltr"
+              autoComplete="current-password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               className="mt-1 h-11 rounded-xl"

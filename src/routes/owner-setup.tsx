@@ -66,6 +66,7 @@ function OwnerSetupPage() {
   const [storeOwner, setStoreOwner] = useState("");
   const [storeGov, setStoreGov] = useState(GOVERNORATES[0]!.name);
   const [storeRegion, setStoreRegion] = useState(GOVERNORATES[0]!.regions[0]!);
+  const [storeAdminUsername, setStoreAdminUsername] = useState("owner");
   const [storeAdminPass, setStoreAdminPass] = useState("");
   const [planId, setPlanId] = useState("pro");
   const [createStoreMsg, setCreateStoreMsg] = useState("");
@@ -185,16 +186,29 @@ function OwnerSetupPage() {
                   </div>
                 </div>
 
-                <div>
-                  <Label className="font-bold">كلمة مرور الأدمن (Password Only)</Label>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <Label className="font-bold">اسم مستخدم صاحب المتجر</Label>
+                    <Input
+                      value={storeAdminUsername}
+                      onChange={e => setStoreAdminUsername(e.target.value.toLowerCase())}
+                      dir="ltr"
+                      className="mt-2 h-11 rounded-xl"
+                      placeholder="owner"
+                      pattern="[a-z0-9][a-z0-9_-]{2,31}"
+                    />
+                  </div>
+                  <div>
+                  <Label className="font-bold">كلمة مرور صاحب المتجر</Label>
                   <Input 
                     type="password" 
                     value={storeAdminPass} 
                     onChange={e => setStoreAdminPass(e.target.value)} 
                     dir="ltr" 
                     className="mt-2 h-11 rounded-xl" 
-                    placeholder="كلمة مرور الدخول السري"
+                    placeholder="8 حروف على الأقل"
                   />
+                  </div>
                 </div>
 
                 <div>
@@ -283,7 +297,7 @@ function OwnerSetupPage() {
 
                 <Button 
                   className="h-16 w-full text-xl font-black rounded-2xl shadow-xl shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
-                  disabled={busy || !storeName || !storeAdminPass || !passphrase}
+                  disabled={busy || !storeName || storeAdminUsername.length < 3 || storeAdminPass.length < 8 || !passphrase}
                   onClick={async () => {
                     setBusy(true);
                     setCreateStoreMsg("");
@@ -296,6 +310,7 @@ function OwnerSetupPage() {
                           ownerName: storeOwner || storeName,
                           governorate: storeGov,
                           region: storeRegion,
+                          adminUsername: storeAdminUsername,
                           adminPassword: storeAdminPass,
                           logoUrl: selectedLogo
                         }
