@@ -43,6 +43,7 @@ import { Route as PosCustomersRouteImport } from './routes/pos.customers'
 import { Route as PosInventoryRouteImport } from './routes/pos.inventory'
 import { Route as PosInvoicesRouteImport } from './routes/pos.invoices'
 import { Route as PosPurchasesRouteImport } from './routes/pos.purchases'
+import { Route as PosReportsRouteImport } from './routes/pos.reports'
 import { Route as PosSuppliersRouteImport } from './routes/pos.suppliers'
 import { Route as ProductSlugRouteImport } from './routes/product.$slug'
 import { Route as SStoreSlugRouteImport } from './routes/s.$storeSlug'
@@ -241,6 +242,11 @@ const PosPurchasesRoute = PosPurchasesRouteImport.update({
   path: '/purchases',
   getParentRoute: () => PosRoute,
 } as any)
+const PosReportsRoute = PosReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => PosRoute,
+} as any)
 const PosSuppliersRoute = PosSuppliersRouteImport.update({
   id: '/suppliers',
   path: '/suppliers',
@@ -410,6 +416,7 @@ export interface FileRoutesByFullPath {
   '/pos/inventory': typeof PosInventoryRoute
   '/pos/invoices': typeof PosInvoicesRoute
   '/pos/purchases': typeof PosPurchasesRoute
+  '/pos/reports': typeof PosReportsRoute
   '/pos/suppliers': typeof PosSuppliersRoute
   '/product/$slug': typeof ProductSlugRoute
   '/s/$storeSlug': typeof SStoreSlugRouteWithChildren
@@ -470,6 +477,7 @@ export interface FileRoutesByTo {
   '/pos/inventory': typeof PosInventoryRoute
   '/pos/invoices': typeof PosInvoicesRoute
   '/pos/purchases': typeof PosPurchasesRoute
+  '/pos/reports': typeof PosReportsRoute
   '/pos/suppliers': typeof PosSuppliersRoute
   '/product/$slug': typeof ProductSlugRoute
   '/track/$token': typeof TrackTokenRoute
@@ -532,6 +540,7 @@ export interface FileRoutesById {
   '/pos/inventory': typeof PosInventoryRoute
   '/pos/invoices': typeof PosInvoicesRoute
   '/pos/purchases': typeof PosPurchasesRoute
+  '/pos/reports': typeof PosReportsRoute
   '/pos/suppliers': typeof PosSuppliersRoute
   '/product/$slug': typeof ProductSlugRoute
   '/s/$storeSlug': typeof SStoreSlugRouteWithChildren
@@ -597,6 +606,7 @@ export interface FileRouteTypes {
     | '/pos/inventory'
     | '/pos/invoices'
     | '/pos/purchases'
+    | '/pos/reports'
     | '/pos/suppliers'
     | '/product/$slug'
     | '/s/$storeSlug'
@@ -657,6 +667,7 @@ export interface FileRouteTypes {
     | '/pos/inventory'
     | '/pos/invoices'
     | '/pos/purchases'
+    | '/pos/reports'
     | '/pos/suppliers'
     | '/product/$slug'
     | '/track/$token'
@@ -718,6 +729,7 @@ export interface FileRouteTypes {
     | '/pos/inventory'
     | '/pos/invoices'
     | '/pos/purchases'
+    | '/pos/reports'
     | '/pos/suppliers'
     | '/product/$slug'
     | '/s/$storeSlug'
@@ -1015,6 +1027,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PosPurchasesRouteImport
       parentRoute: typeof PosRoute
     }
+    '/pos/reports': {
+      id: '/pos/reports'
+      path: '/reports'
+      fullPath: '/pos/reports'
+      preLoaderRoute: typeof PosReportsRouteImport
+      parentRoute: typeof PosRoute
+    }
     '/pos/suppliers': {
       id: '/pos/suppliers'
       path: '/suppliers'
@@ -1284,6 +1303,7 @@ interface PosRouteChildren {
   PosInventoryRoute: typeof PosInventoryRoute
   PosInvoicesRoute: typeof PosInvoicesRoute
   PosPurchasesRoute: typeof PosPurchasesRoute
+  PosReportsRoute: typeof PosReportsRoute
   PosSuppliersRoute: typeof PosSuppliersRoute
   PosIndexRoute: typeof PosIndexRoute
 }
@@ -1293,6 +1313,7 @@ const PosRouteChildren: PosRouteChildren = {
   PosInventoryRoute: PosInventoryRoute,
   PosInvoicesRoute: PosInvoicesRoute,
   PosPurchasesRoute: PosPurchasesRoute,
+  PosReportsRoute: PosReportsRoute,
   PosSuppliersRoute: PosSuppliersRoute,
   PosIndexRoute: PosIndexRoute,
 }
