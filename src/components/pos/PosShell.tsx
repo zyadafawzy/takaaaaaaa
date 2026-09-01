@@ -142,18 +142,23 @@ export function PosShell({
 
   if (!signedIn) return <PosSignIn />;
 
-  if (!boot || boot.memberships.length === 0) {
+  if (!boot || boot.memberships.length === 0 || (storeSlug && !storeId)) {
+    const scopedDenied = Boolean(storeSlug) && Boolean(boot) && boot!.memberships.length > 0;
     return (
       <div className="mx-auto max-w-lg space-y-4 p-10 text-center">
-        <Logo />
+        {embedded ? null : <Logo />}
         <h1 className="text-2xl font-extrabold">مفيش صلاحية على نقاط البيع</h1>
         <p className="text-muted-foreground">
-          حسابك مسجّل، لكنه مش مضاف لأي متجر في نظام الكاشير. اطلب من صاحب المتجر يضيفك من صفحة الإعدادات.
+          {scopedDenied
+            ? "حسابك مش مضاف لنقاط البيع بتاعة المتجر ده. اطلب من صاحب المتجر يضيفك للفريق."
+            : "حسابك مسجّل، لكنه مش مضاف لأي متجر في نظام الكاشير. اطلب من صاحب المتجر يضيفك من صفحة الإعدادات."}
         </p>
-        <Button variant="outline" onClick={() => void supabase.auth.signOut()}>
-          <LogOut className="size-4" />
-          خروج
-        </Button>
+        {embedded ? null : (
+          <Button variant="outline" onClick={() => void supabase.auth.signOut()}>
+            <LogOut className="size-4" />
+            خروج
+          </Button>
+        )}
       </div>
     );
   }
