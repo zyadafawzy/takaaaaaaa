@@ -39,6 +39,7 @@ import { Route as CategorySlugRouteImport } from './routes/category.$slug'
 import { Route as DeveloperIndexRouteImport } from './routes/developer.index'
 import { Route as DeveloperNewRouteImport } from './routes/developer.new'
 import { Route as PosIndexRouteImport } from './routes/pos.index'
+import { Route as PosInvoicesRouteImport } from './routes/pos.invoices'
 import { Route as ProductSlugRouteImport } from './routes/product.$slug'
 import { Route as SStoreSlugRouteImport } from './routes/s.$storeSlug'
 import { Route as TrackTokenRouteImport } from './routes/track.$token'
@@ -216,6 +217,11 @@ const PosIndexRoute = PosIndexRouteImport.update({
   path: '/',
   getParentRoute: () => PosRoute,
 } as any)
+const PosInvoicesRoute = PosInvoicesRouteImport.update({
+  id: '/invoices',
+  path: '/invoices',
+  getParentRoute: () => PosRoute,
+} as any)
 const ProductSlugRoute = ProductSlugRouteImport.update({
   id: '/product/$slug',
   path: '/product/$slug',
@@ -376,6 +382,7 @@ export interface FileRoutesByFullPath {
   '/admin/settings': typeof AdminSettingsRoute
   '/category/$slug': typeof CategorySlugRoute
   '/developer/new': typeof DeveloperNewRoute
+  '/pos/invoices': typeof PosInvoicesRoute
   '/product/$slug': typeof ProductSlugRoute
   '/s/$storeSlug': typeof SStoreSlugRouteWithChildren
   '/track/$token': typeof TrackTokenRoute
@@ -431,6 +438,7 @@ export interface FileRoutesByTo {
   '/admin/settings': typeof AdminSettingsRoute
   '/category/$slug': typeof CategorySlugRoute
   '/developer/new': typeof DeveloperNewRoute
+  '/pos/invoices': typeof PosInvoicesRoute
   '/product/$slug': typeof ProductSlugRoute
   '/track/$token': typeof TrackTokenRoute
   '/admin': typeof AdminIndexRoute
@@ -488,6 +496,7 @@ export interface FileRoutesById {
   '/admin/settings': typeof AdminSettingsRoute
   '/category/$slug': typeof CategorySlugRoute
   '/developer/new': typeof DeveloperNewRoute
+  '/pos/invoices': typeof PosInvoicesRoute
   '/product/$slug': typeof ProductSlugRoute
   '/s/$storeSlug': typeof SStoreSlugRouteWithChildren
   '/track/$token': typeof TrackTokenRoute
@@ -548,6 +557,7 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/category/$slug'
     | '/developer/new'
+    | '/pos/invoices'
     | '/product/$slug'
     | '/s/$storeSlug'
     | '/track/$token'
@@ -603,6 +613,7 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/category/$slug'
     | '/developer/new'
+    | '/pos/invoices'
     | '/product/$slug'
     | '/track/$token'
     | '/admin'
@@ -659,6 +670,7 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/category/$slug'
     | '/developer/new'
+    | '/pos/invoices'
     | '/product/$slug'
     | '/s/$storeSlug'
     | '/track/$token'
@@ -927,6 +939,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PosIndexRouteImport
       parentRoute: typeof PosRoute
     }
+    '/pos/invoices': {
+      id: '/pos/invoices'
+      path: '/invoices'
+      fullPath: '/pos/invoices'
+      preLoaderRoute: typeof PosInvoicesRouteImport
+      parentRoute: typeof PosRoute
+    }
     '/product/$slug': {
       id: '/product/$slug'
       path: '/product/$slug'
@@ -1185,10 +1204,12 @@ const DeveloperRouteWithChildren = DeveloperRoute._addFileChildren(
 )
 
 interface PosRouteChildren {
+  PosInvoicesRoute: typeof PosInvoicesRoute
   PosIndexRoute: typeof PosIndexRoute
 }
 
 const PosRouteChildren: PosRouteChildren = {
+  PosInvoicesRoute: PosInvoicesRoute,
   PosIndexRoute: PosIndexRoute,
 }
 
