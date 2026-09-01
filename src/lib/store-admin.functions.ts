@@ -253,20 +253,13 @@ export const storeAdminSetProduct = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { requireStoreAccess, logStoreActivity, STORE_ADMIN_ROLES } =
       await import("./store-admin.server");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const access = await requireStoreAccess(
       context.supabase,
       context.userId,
       data.storeSlug,
       STORE_ADMIN_ROLES,
     );
-    if (access.role !== "platform_owner") {
-      const { data: isOwner } = await context.supabase.rpc("pos_has_store_role", {
-        _user_id: context.userId,
-        _store_id: access.storeId,
-        _roles: ["store_owner"],
-      });
-      if (isOwner !== true) throw new Error("FORBIDDEN");
-    }
 
     const payload: Record<string, unknown> = {
       store_id: access.storeId,
@@ -683,13 +676,20 @@ export const storeAdminAddMember = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { requireStoreAccess, logStoreActivity, STORE_ADMIN_ROLES } =
       await import("./store-admin.server");
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const access = await requireStoreAccess(
       context.supabase,
       context.userId,
       data.storeSlug,
       STORE_ADMIN_ROLES,
     );
+    if (access.role !== "platform_owner") {
+      const { data: isOwner } = await context.supabase.rpc("pos_has_store_role", {
+        _user_id: context.userId,
+        _store_id: access.storeId,
+        _roles: ["store_owner"],
+      });
+      if (isOwner !== true) throw new Error("FORBIDDEN");
+    }
 
     const { provisionStoreMemberAccount } = await import("./store-session.server");
     const account = await provisionStoreMemberAccount(access.storeId, access.storeSlug, {
@@ -727,6 +727,14 @@ export const storeAdminUpdateMember = createServerFn({ method: "POST" })
       data.storeSlug,
       STORE_ADMIN_ROLES,
     );
+    if (access.role !== "platform_owner") {
+      const { data: isOwner } = await context.supabase.rpc("pos_has_store_role", {
+        _user_id: context.userId,
+        _store_id: access.storeId,
+        _roles: ["store_owner"],
+      });
+      if (isOwner !== true) throw new Error("FORBIDDEN");
+    }
 
     const { data: member } = await supabaseAdmin
       .from("store_users")
@@ -771,6 +779,14 @@ export const storeAdminRemoveMember = createServerFn({ method: "POST" })
       data.storeSlug,
       STORE_ADMIN_ROLES,
     );
+    if (access.role !== "platform_owner") {
+      const { data: isOwner } = await context.supabase.rpc("pos_has_store_role", {
+        _user_id: context.userId,
+        _store_id: access.storeId,
+        _roles: ["store_owner"],
+      });
+      if (isOwner !== true) throw new Error("FORBIDDEN");
+    }
     const { data: member } = await supabaseAdmin
       .from("store_users")
       .select("id, user_id, email")
