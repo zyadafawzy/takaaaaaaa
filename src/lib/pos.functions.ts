@@ -317,6 +317,17 @@ const cartLineSchema = z.object({
   barcode: z.string().max(64).nullable().optional(),
 });
 
+/** صنف غير مسجّل: بيتباع بسعر يدوي وبيتسجّل في تقرير المجهولات. */
+export const unknownLineSchema = z.object({
+  barcode: z.string().trim().min(1).max(64),
+  name: z.string().trim().min(1).max(200).default("منتج غير مسجل"),
+  sellPrice: z.number().min(0).max(1_000_000),
+  qty: z.number().gt(0).max(100_000),
+  unitLabel: z.string().max(40).default("قطعة"),
+  notes: z.string().max(300).optional(),
+});
+
+
 export const posCheckout = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
