@@ -21,7 +21,7 @@ type Props = {
   busy?: boolean;
   onSelect: (customer: PosCustomer | null) => void;
   onSearch: (query: string) => void;
-  onCreate: (input: { name: string; phone?: string }) => Promise<void>;
+  onCreate: (input: { name: string; phone?: string | undefined }) => Promise<void>;
 };
 
 export function CustomerSelector({ selected, customers, busy, onSelect, onSearch, onCreate }: Props) {
