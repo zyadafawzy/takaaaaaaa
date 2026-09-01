@@ -876,8 +876,10 @@ export type Database = {
       damaged_items: {
         Row: {
           branch_id: string | null
+          cost_value: number | null
           created_at: string
           id: string
+          photo_urls: string[] | null
           qty: number
           reason: string | null
           recorded_by: string
@@ -886,8 +888,10 @@ export type Database = {
         }
         Insert: {
           branch_id?: string | null
+          cost_value?: number | null
           created_at?: string
           id?: string
+          photo_urls?: string[] | null
           qty: number
           reason?: string | null
           recorded_by: string
@@ -896,8 +900,10 @@ export type Database = {
         }
         Update: {
           branch_id?: string | null
+          cost_value?: number | null
           created_at?: string
           id?: string
+          photo_urls?: string[] | null
           qty?: number
           reason?: string | null
           recorded_by?: string
@@ -970,6 +976,7 @@ export type Database = {
       expired_items: {
         Row: {
           branch_id: string | null
+          cost_value: number | null
           disposed_at: string
           disposed_by: string
           expiry_date: string | null
@@ -980,6 +987,7 @@ export type Database = {
         }
         Insert: {
           branch_id?: string | null
+          cost_value?: number | null
           disposed_at?: string
           disposed_by: string
           expiry_date?: string | null
@@ -990,6 +998,7 @@ export type Database = {
         }
         Update: {
           branch_id?: string | null
+          cost_value?: number | null
           disposed_at?: string
           disposed_by?: string
           expiry_date?: string | null
@@ -1114,46 +1123,55 @@ export type Database = {
           barcode_scanned: string | null
           cost_price_snapshot: number | null
           created_at: string
+          discount_amount: number
           discount_pct: number
           id: string
           invoice_id: string
+          is_unknown_product: boolean
           line_total: number
-          product_id: string
+          product_id: string | null
           product_name_snapshot: string
           qty: number
           sell_price_snapshot: number
           unit_label_snapshot: string
-          variant_id: string
+          unknown_scan_item_id: string | null
+          variant_id: string | null
         }
         Insert: {
           barcode_scanned?: string | null
           cost_price_snapshot?: number | null
           created_at?: string
+          discount_amount?: number
           discount_pct?: number
           id?: string
           invoice_id: string
+          is_unknown_product?: boolean
           line_total: number
-          product_id: string
+          product_id?: string | null
           product_name_snapshot: string
           qty: number
           sell_price_snapshot: number
           unit_label_snapshot?: string
-          variant_id: string
+          unknown_scan_item_id?: string | null
+          variant_id?: string | null
         }
         Update: {
           barcode_scanned?: string | null
           cost_price_snapshot?: number | null
           created_at?: string
+          discount_amount?: number
           discount_pct?: number
           id?: string
           invoice_id?: string
+          is_unknown_product?: boolean
           line_total?: number
-          product_id?: string
+          product_id?: string | null
           product_name_snapshot?: string
           qty?: number
           sell_price_snapshot?: number
           unit_label_snapshot?: string
-          variant_id?: string
+          unknown_scan_item_id?: string | null
+          variant_id?: string | null
         }
         Relationships: [
           {
@@ -1168,6 +1186,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_items_unknown_scan_item_id_fkey"
+            columns: ["unknown_scan_item_id"]
+            isOneToOne: false
+            referencedRelation: "unknown_scan_items"
             referencedColumns: ["id"]
           },
           {
@@ -1792,11 +1817,15 @@ export type Database = {
           confirmed_at: string | null
           confirmed_by: string | null
           created_at: string
+          credit_amount: number
           customer_id: string | null
           delivery_order_id: string | null
           discount_amount: number
+          discount_pct: number
           id: string
           invoice_number: string
+          loyalty_points_earned: number
+          loyalty_points_redeemed: number
           notes: string | null
           paid_amount: number
           sale_source: string
@@ -1806,6 +1835,7 @@ export type Database = {
           subtotal: number
           tax_amount: number
           total: number
+          updated_at: string
           void_reason: string | null
           voided_at: string | null
           voided_by: string | null
@@ -1817,11 +1847,15 @@ export type Database = {
           confirmed_at?: string | null
           confirmed_by?: string | null
           created_at?: string
+          credit_amount?: number
           customer_id?: string | null
           delivery_order_id?: string | null
           discount_amount?: number
+          discount_pct?: number
           id?: string
           invoice_number: string
+          loyalty_points_earned?: number
+          loyalty_points_redeemed?: number
           notes?: string | null
           paid_amount?: number
           sale_source?: string
@@ -1831,6 +1865,7 @@ export type Database = {
           subtotal?: number
           tax_amount?: number
           total?: number
+          updated_at?: string
           void_reason?: string | null
           voided_at?: string | null
           voided_by?: string | null
@@ -1842,11 +1877,15 @@ export type Database = {
           confirmed_at?: string | null
           confirmed_by?: string | null
           created_at?: string
+          credit_amount?: number
           customer_id?: string | null
           delivery_order_id?: string | null
           discount_amount?: number
+          discount_pct?: number
           id?: string
           invoice_number?: string
+          loyalty_points_earned?: number
+          loyalty_points_redeemed?: number
           notes?: string | null
           paid_amount?: number
           sale_source?: string
@@ -1856,6 +1895,7 @@ export type Database = {
           subtotal?: number
           tax_amount?: number
           total?: number
+          updated_at?: string
           void_reason?: string | null
           voided_at?: string | null
           voided_by?: string | null
@@ -1894,6 +1934,7 @@ export type Database = {
       pos_members: {
         Row: {
           branch_id: string | null
+          can_discount: boolean
           created_at: string
           email: string
           full_name: string
@@ -1906,6 +1947,7 @@ export type Database = {
         }
         Insert: {
           branch_id?: string | null
+          can_discount?: boolean
           created_at?: string
           email?: string
           full_name?: string
@@ -1918,6 +1960,7 @@ export type Database = {
         }
         Update: {
           branch_id?: string | null
+          can_discount?: boolean
           created_at?: string
           email?: string
           full_name?: string
@@ -1950,6 +1993,7 @@ export type Database = {
           document_type: string
           id: string
           invoice_id: string | null
+          paper_size: string
           printed_at: string
           printed_by: string | null
           printer_name: string | null
@@ -1959,6 +2003,7 @@ export type Database = {
           document_type: string
           id?: string
           invoice_id?: string | null
+          paper_size?: string
           printed_at?: string
           printed_by?: string | null
           printer_name?: string | null
@@ -1968,6 +2013,7 @@ export type Database = {
           document_type?: string
           id?: string
           invoice_id?: string | null
+          paper_size?: string
           printed_at?: string
           printed_by?: string | null
           printer_name?: string | null
@@ -2640,8 +2686,12 @@ export type Database = {
         Row: {
           alert_type: string
           branch_id: string | null
+          current_qty: number | null
+          expiry_date: string | null
           id: string
           is_active: boolean
+          is_ordered: boolean
+          min_qty: number | null
           resolved_at: string | null
           store_id: string
           triggered_at: string
@@ -2650,8 +2700,12 @@ export type Database = {
         Insert: {
           alert_type: string
           branch_id?: string | null
+          current_qty?: number | null
+          expiry_date?: string | null
           id?: string
           is_active?: boolean
+          is_ordered?: boolean
+          min_qty?: number | null
           resolved_at?: string | null
           store_id: string
           triggered_at?: string
@@ -2660,8 +2714,12 @@ export type Database = {
         Update: {
           alert_type?: string
           branch_id?: string | null
+          current_qty?: number | null
+          expiry_date?: string | null
           id?: string
           is_active?: boolean
+          is_ordered?: boolean
+          min_qty?: number | null
           resolved_at?: string | null
           store_id?: string
           triggered_at?: string
@@ -3398,40 +3456,58 @@ export type Database = {
           barcode: string
           branch_id: string | null
           id: string
+          invoice_id: string | null
+          manual_price: number | null
           notes: string | null
+          qty: number
           resolved: boolean
           resolved_at: string | null
           resolved_by: string | null
+          resolved_variant_id: string | null
           scanned_at: string
           scanned_by: string | null
           session_id: string | null
           store_id: string
+          temp_name: string
+          unit_label: string
         }
         Insert: {
           barcode: string
           branch_id?: string | null
           id?: string
+          invoice_id?: string | null
+          manual_price?: number | null
           notes?: string | null
+          qty?: number
           resolved?: boolean
           resolved_at?: string | null
           resolved_by?: string | null
+          resolved_variant_id?: string | null
           scanned_at?: string
           scanned_by?: string | null
           session_id?: string | null
           store_id: string
+          temp_name?: string
+          unit_label?: string
         }
         Update: {
           barcode?: string
           branch_id?: string | null
           id?: string
+          invoice_id?: string | null
+          manual_price?: number | null
           notes?: string | null
+          qty?: number
           resolved?: boolean
           resolved_at?: string | null
           resolved_by?: string | null
+          resolved_variant_id?: string | null
           scanned_at?: string
           scanned_by?: string | null
           session_id?: string | null
           store_id?: string
+          temp_name?: string
+          unit_label?: string
         }
         Relationships: [
           {
@@ -3439,6 +3515,20 @@ export type Database = {
             columns: ["branch_id"]
             isOneToOne: false
             referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "unknown_scan_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "pos_invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "unknown_scan_items_resolved_variant_id_fkey"
+            columns: ["resolved_variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
             referencedColumns: ["id"]
           },
           {
@@ -3542,6 +3632,34 @@ export type Database = {
         Args: { p_amount: number; p_customer_id: string; p_notes?: string }
         Returns: Json
       }
+      rpc_hold_invoice: { Args: { p_invoice_id: string }; Returns: Json }
+      rpc_record_damage: {
+        Args: {
+          p_branch_id?: string
+          p_expiry_date?: string
+          p_kind?: string
+          p_qty: number
+          p_reason?: string
+          p_store_id: string
+          p_variant_id: string
+        }
+        Returns: Json
+      }
+      rpc_resolve_unknown_barcode: {
+        Args: {
+          p_barcode: string
+          p_branch_id?: string
+          p_category_id?: string
+          p_cost_price?: number
+          p_initial_qty?: number
+          p_name: string
+          p_sell_price: number
+          p_store_id: string
+          p_unit_label?: string
+        }
+        Returns: Json
+      }
+      rpc_resume_invoice: { Args: { p_invoice_id: string }; Returns: Json }
       rpc_scan_barcode: {
         Args: {
           p_barcode: string

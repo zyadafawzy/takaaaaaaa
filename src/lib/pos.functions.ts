@@ -317,6 +317,17 @@ const cartLineSchema = z.object({
   barcode: z.string().max(64).nullable().optional(),
 });
 
+/** صنف غير مسجّل: بيتباع بسعر يدوي وبيتسجّل في تقرير المجهولات. */
+export const unknownLineSchema = z.object({
+  barcode: z.string().trim().min(1).max(64),
+  name: z.string().trim().min(1).max(200).default("منتج غير مسجل"),
+  sellPrice: z.number().min(0).max(1_000_000),
+  qty: z.number().gt(0).max(100_000),
+  unitLabel: z.string().max(40).default("قطعة"),
+  notes: z.string().max(300).optional(),
+});
+
+
 export const posCheckout = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
@@ -329,7 +340,8 @@ export const posCheckout = createServerFn({ method: "POST" })
         discountAmount: z.number().min(0).max(1_000_000).default(0),
         taxAmount: z.number().min(0).max(1_000_000).default(0),
         notes: z.string().max(400).optional(),
-        lines: z.array(cartLineSchema).min(1).max(200),
+        lines: z.array(cartLineSchema).max(200).default([]),
+        unknownLines: z.array(unknownLineSchema).max(50).default([]),
         payments: z
           .array(z.object({ methodId: uuid, amount: z.number().gt(0).max(1_000_000), reference: z.string().max(60).optional() }))
           .max(5)
@@ -340,6 +352,9 @@ export const posCheckout = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { requireStoreRole, ROLE_WRITE, round2 } = await import("./pos.server");
     await requireStoreRole(context.supabase, context.userId, data.storeId, ROLE_WRITE);
+
+    if (data.lines.length === 0 && data.unknownLines.length === 0) throw new Error("CART_EMPTY");
+
 
     const { data: shift } = await context.supabase
       .from("cash_shifts")
@@ -391,11 +406,46 @@ export const posCheckout = createServerFn({ method: "POST" })
       };
     });
 
+    // الأصناف غير المسجّلة: نسجّل الباركود في تقرير المجهولات ونضيف سطر snapshot بسعر يدوي.
+    for (const unknown of data.unknownLines) {
+      const { data: scan } = await context.supabase
+        .from("unknown_scan_items")
+        .insert({
+          store_id: data.storeId,
+          branch_id: data.branchId ?? null,
+          barcode: unknown.barcode,
+          temp_name: unknown.name,
+          manual_price: unknown.sellPrice,
+          qty: unknown.qty,
+          unit_label: unknown.unitLabel || "قطعة",
+          notes: unknown.notes ?? null,
+        })
+        .select("id")
+        .single();
+
+      items.push({
+        invoice_id: invoice.id,
+        variant_id: null,
+        product_id: null,
+        barcode_scanned: unknown.barcode,
+        product_name_snapshot: unknown.name,
+        unit_label_snapshot: unknown.unitLabel || "قطعة",
+        sell_price_snapshot: unknown.sellPrice,
+        cost_price_snapshot: null,
+        qty: unknown.qty,
+        discount_pct: 0,
+        line_total: round2(unknown.sellPrice * unknown.qty),
+        is_unknown_product: true,
+        unknown_scan_item_id: scan?.id ?? null,
+      } as unknown as (typeof items)[number]);
+    }
+
     const { error: itemsError } = await context.supabase.from("invoice_items").insert(items);
     if (itemsError) {
       await context.supabase.from("pos_invoices").delete().eq("id", invoice.id);
       throw new Error("INVOICE_ITEMS_FAILED");
     }
+
 
     if (data.payments.length > 0) {
       const { error: payError } = await context.supabase.from("invoice_payments").insert(

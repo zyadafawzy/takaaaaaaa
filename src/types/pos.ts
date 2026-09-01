@@ -116,3 +116,38 @@ export function lineTotal(line: { sellPrice: number; qty: number; discountPct: n
   const net = gross * (1 - (line.discountPct || 0) / 100);
   return Math.round(net * 100) / 100;
 }
+
+/** سطر صنف غير مسجّل في السلة — بيتباع بسعر يدوي. */
+export type PosUnknownLine = {
+  barcode: string;
+  name: string;
+  sellPrice: number;
+  qty: number;
+  unitLabel: string;
+};
+
+export type PosHeldInvoice = {
+  id: string;
+  invoiceNumber: string;
+  createdAt: string;
+  itemsCount: number;
+  total: number;
+  customerId: string | null;
+};
+
+export type PosUnknownGroup = {
+  barcode: string;
+  times: number;
+  totalQty: number;
+  totalValue: number;
+  lastPrice: number | null;
+  names: string[];
+  lastScannedAt: string;
+  invoicesCount: number;
+  resolved: boolean;
+  unitLabel: string;
+};
+
+export function unknownLineTotal(line: PosUnknownLine): number {
+  return Math.round(line.sellPrice * line.qty * 100) / 100;
+}
