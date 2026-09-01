@@ -225,6 +225,9 @@ export function CashierPage() {
       clearCart();
       setPayOpen(false);
       toast.success(`تم البيع — ${result.invoiceNumber} · الباقي ${formatPrice(result.change)}`);
+      if (isAutoPrintEnabled()) {
+        window.setTimeout(() => void printInvoice(result.invoiceId), 250);
+      }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "الفاتورة فشلت.");
     }
@@ -232,13 +235,15 @@ export function CashierPage() {
   };
 
   const printInvoice = async (invoiceId: string | null) => {
-    window.print();
+    const ok = printReceipt();
+    if (!ok) window.print();
     try {
       await posLogPrint({ data: { storeId: pos.storeId, invoiceId, documentType: "invoice_80mm" } });
     } catch {
       /* الطباعة نفسها نجحت — السجل مش حاجز. */
     }
   };
+
 
   // اختصارات الكاشير: F2 دفع · F4 تعليق · F6 استرجاع · F8 تفريغ
   useEffect(() => {
