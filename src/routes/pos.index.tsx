@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { formatPrice } from "@/lib/format";
+import { isAutoPrintEnabled, printReceipt, setAutoPrintEnabled } from "@/lib/pos-print";
 import {
   posHoldCart,
   posListHeldInvoices,
@@ -69,6 +70,11 @@ export function CashierPage() {
   const [unknownBarcode, setUnknownBarcode] = useState<string | null>(null);
   const [holdOpen, setHoldOpen] = useState(false);
   const [held, setHeld] = useState<PosHeldInvoice[]>([]);
+  const [autoPrint, setAutoPrint] = useState(true);
+
+  useEffect(() => {
+    setAutoPrint(isAutoPrintEnabled());
+  }, []);
 
   const subtotal =
     lines.reduce((sum, line) => sum + lineTotal(line), 0) +
@@ -225,6 +231,9 @@ export function CashierPage() {
       clearCart();
       setPayOpen(false);
       toast.success(`تم البيع — ${result.invoiceNumber} · الباقي ${formatPrice(result.change)}`);
+      if (isAutoPrintEnabled()) {
+        window.setTimeout(() => void printInvoice(result.invoiceId), 250);
+      }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "الفاتورة فشلت.");
     }
@@ -232,13 +241,15 @@ export function CashierPage() {
   };
 
   const printInvoice = async (invoiceId: string | null) => {
-    window.print();
+    const ok = printReceipt();
+    if (!ok) window.print();
     try {
       await posLogPrint({ data: { storeId: pos.storeId, invoiceId, documentType: "invoice_80mm" } });
     } catch {
       /* الطباعة نفسها نجحت — السجل مش حاجز. */
     }
   };
+
 
   // اختصارات الكاشير: F2 دفع · F4 تعليق · F6 استرجاع · F8 تفريغ
   useEffect(() => {
@@ -418,6 +429,19 @@ export function CashierPage() {
           </Button>
         </div>
 
+        <label className="flex items-center justify-between rounded-lg border border-border p-3 text-sm">
+          <span className="font-semibold">طباعة الفاتورة تلقائيًا بعد الدفع</span>
+          <input
+            type="checkbox"
+            className="size-4 accent-primary"
+            defaultChecked={autoPrint}
+            onChange={(event) => {
+              setAutoPrintEnabled(event.target.checked);
+              setAutoPrint(event.target.checked);
+            }}
+          />
+        </label>
+
         {lastInvoice ? (
           <div className="space-y-2 rounded-lg border border-border p-3">
             <div className="flex items-center justify-between">
@@ -430,6 +454,7 @@ export function CashierPage() {
             <InvoicePrint invoice={lastInvoice} storeName={pos.storeName} />
           </div>
         ) : null}
+
       </aside>
 
       <PaymentModal
