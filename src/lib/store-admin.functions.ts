@@ -912,3 +912,17 @@ export const storeAdminReports = createServerFn({ method: "GET" })
       topProducts: topProducts.slice(0, 15),
     };
   });
+
+/** تحقّق حقيقي من الخادم إن الجلسة الحالية مسموح لها بلوحة هذا المتجر بالذات. */
+export const storeAdminSessionCheck = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => storeSlugInput.parse(input))
+  .handler(async ({ data, context }) => {
+    const { requireStoreAccess } = await import("./store-admin.server");
+    try {
+      const access = await requireStoreAccess(context.supabase, context.userId, data.storeSlug);
+      return { ok: true as const, storeSlug: access.storeSlug, role: access.role };
+    } catch {
+      return { ok: false as const };
+    }
+  });
