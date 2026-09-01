@@ -650,6 +650,9 @@ export const storeAdminTeam = createServerFn({ method: "GET" })
       .select("user_id, role, is_active")
       .eq("store_id", access.storeId);
 
+    const currentPosRole = (posRows ?? []).find((row) => row.user_id === context.userId)?.role;
+    const canManageTeam = access.role === "platform_owner" || currentPosRole === "store_owner";
+
     const members = (rows ?? []).map((row) => {
       const pos = (posRows ?? []).find((p) => p.user_id === row.user_id);
       const tier: TeamTier =
@@ -658,7 +661,7 @@ export const storeAdminTeam = createServerFn({ method: "GET" })
       return { ...row, username, tier, posRole: pos?.role ?? null, posActive: pos?.is_active ?? false };
     });
 
-    return { role: access.role, members };
+    return { role: access.role, canManageTeam, members };
   });
 
 export const storeAdminAddMember = createServerFn({ method: "POST" })

@@ -82,14 +82,6 @@ export const ownerCreateStore = createServerFn({ method: "POST" })
         business_hours: '24/7',
         is_maintenance: false, // Added by migration
         maintenance_message: 'المتجر في وضع الصيانة حالياً. نعتذر عن الإزعاج.',
-        settings: {
-          currency: "EGP",
-          delivery_regions: [{ governorate: data.governorate, region: data.region }]
-        },
-        branding: {
-          primaryColor: "#059669",
-          heroImageUrl: data.logoUrl ?? null
-        }
       } as any)
       .select()
       .single();

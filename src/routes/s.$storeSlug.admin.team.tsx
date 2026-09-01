@@ -98,10 +98,11 @@ function StoreAdminTeam() {
     return <p className="text-sm text-destructive">مفيش صلاحية لعرض فريق المتجر.</p>;
 
   const members = query.data?.members ?? [];
+  const canManageTeam = query.data?.canManageTeam === true;
 
   return (
     <div className="space-y-6">
-      <section className="rounded-2xl border border-border bg-surface p-5">
+      {canManageTeam ? <section className="rounded-2xl border border-border bg-surface p-5">
         <h2 className="flex items-center gap-2 text-lg font-extrabold">
           <UserPlus className="size-5" /> إضافة عضو للفريق
         </h2>
@@ -170,7 +171,14 @@ function StoreAdminTeam() {
             </Button>
           </div>
         </form>
-      </section>
+      </section> : (
+        <section className="rounded-2xl border border-border bg-surface p-5">
+          <h2 className="text-lg font-extrabold">صلاحيات الفريق</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            عرض الفريق متاح لك، لكن إضافة الأعضاء وتغيير أدوارهم متاحان لصاحب المتجر فقط.
+          </p>
+        </section>
+      )}
 
       <section className="rounded-2xl border border-border bg-surface p-5">
         <h2 className="text-lg font-extrabold">الفريق الحالي ({members.length})</h2>
@@ -191,6 +199,7 @@ function StoreAdminTeam() {
               </div>
               <Select
                 value={member.tier}
+                disabled={!canManageTeam}
                 onValueChange={(value) =>
                   updateMember.mutate({
                     id: member.id,
@@ -211,6 +220,7 @@ function StoreAdminTeam() {
               <div className="flex items-center gap-2">
                 <Switch
                   checked={member.active}
+                  disabled={!canManageTeam}
                   onCheckedChange={(checked) =>
                     updateMember.mutate({ id: member.id, active: checked })
                   }
@@ -225,6 +235,7 @@ function StoreAdminTeam() {
                 className="ms-auto text-destructive"
                 onClick={() => removeMember.mutate(member.id)}
                 aria-label="حذف العضو"
+                disabled={!canManageTeam}
               >
                 <Trash2 className="size-4" />
               </Button>
