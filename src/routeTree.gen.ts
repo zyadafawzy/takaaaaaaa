@@ -19,6 +19,7 @@ import { Route as DeliveryRouteImport } from './routes/delivery'
 import { Route as DeveloperRouteImport } from './routes/developer'
 import { Route as FreshnessRouteImport } from './routes/freshness'
 import { Route as OwnerSetupRouteImport } from './routes/owner-setup'
+import { Route as PosRouteImport } from './routes/pos'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as TermsRouteImport } from './routes/terms'
@@ -112,6 +113,11 @@ const FreshnessRoute = FreshnessRouteImport.update({
 const OwnerSetupRoute = OwnerSetupRouteImport.update({
   id: '/owner-setup',
   path: '/owner-setup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PosRoute = PosRouteImport.update({
+  id: '/pos',
+  path: '/pos',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacyRoute = PrivacyRouteImport.update({
@@ -347,6 +353,7 @@ export interface FileRoutesByFullPath {
   '/developer': typeof DeveloperRouteWithChildren
   '/freshness': typeof FreshnessRoute
   '/owner-setup': typeof OwnerSetupRoute
+  '/pos': typeof PosRoute
   '/privacy': typeof PrivacyRoute
   '/search': typeof SearchRoute
   '/terms': typeof TermsRoute
@@ -401,6 +408,7 @@ export interface FileRoutesByTo {
   '/delivery': typeof DeliveryRoute
   '/freshness': typeof FreshnessRoute
   '/owner-setup': typeof OwnerSetupRoute
+  '/pos': typeof PosRoute
   '/privacy': typeof PrivacyRoute
   '/search': typeof SearchRoute
   '/terms': typeof TermsRoute
@@ -456,6 +464,7 @@ export interface FileRoutesById {
   '/developer': typeof DeveloperRouteWithChildren
   '/freshness': typeof FreshnessRoute
   '/owner-setup': typeof OwnerSetupRoute
+  '/pos': typeof PosRoute
   '/privacy': typeof PrivacyRoute
   '/search': typeof SearchRoute
   '/terms': typeof TermsRoute
@@ -514,6 +523,7 @@ export interface FileRouteTypes {
     | '/developer'
     | '/freshness'
     | '/owner-setup'
+    | '/pos'
     | '/privacy'
     | '/search'
     | '/terms'
@@ -568,6 +578,7 @@ export interface FileRouteTypes {
     | '/delivery'
     | '/freshness'
     | '/owner-setup'
+    | '/pos'
     | '/privacy'
     | '/search'
     | '/terms'
@@ -622,6 +633,7 @@ export interface FileRouteTypes {
     | '/developer'
     | '/freshness'
     | '/owner-setup'
+    | '/pos'
     | '/privacy'
     | '/search'
     | '/terms'
@@ -679,6 +691,7 @@ export interface RootRouteChildren {
   DeveloperRoute: typeof DeveloperRouteWithChildren
   FreshnessRoute: typeof FreshnessRoute
   OwnerSetupRoute: typeof OwnerSetupRoute
+  PosRoute: typeof PosRoute
   PrivacyRoute: typeof PrivacyRoute
   SearchRoute: typeof SearchRoute
   TermsRoute: typeof TermsRoute
@@ -762,6 +775,13 @@ declare module '@tanstack/react-router' {
       path: '/owner-setup'
       fullPath: '/owner-setup'
       preLoaderRoute: typeof OwnerSetupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pos': {
+      id: '/pos'
+      path: '/pos'
+      fullPath: '/pos'
+      preLoaderRoute: typeof PosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacy': {
@@ -1210,6 +1230,7 @@ const rootRouteChildren: RootRouteChildren = {
   DeveloperRoute: DeveloperRouteWithChildren,
   FreshnessRoute: FreshnessRoute,
   OwnerSetupRoute: OwnerSetupRoute,
+  PosRoute: PosRoute,
   PrivacyRoute: PrivacyRoute,
   SearchRoute: SearchRoute,
   TermsRoute: TermsRoute,
