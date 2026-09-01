@@ -583,6 +583,39 @@ export const storeAdminDeleteZone = createServerFn({ method: "POST" })
 
 /* ----------------------------- فريق المتجر ----------------------------- */
 
+/* ------------------------------ أدوار الفريق ------------------------------ */
+
+/** درجات الفريق الثلاثة: مالك المتجر، مشرف/مدير فرع، كاشير. */
+const TEAM_TIERS = {
+  owner: { storeRole: "store_admin" as const, posRole: "store_owner" as const },
+  manager: { storeRole: "store_admin" as const, posRole: "branch_manager" as const },
+  cashier: { storeRole: "store_staff" as const, posRole: "cashier" as const },
+};
+type TeamTier = keyof typeof TEAM_TIERS;
+
+/** يزامن صلاحية الكاشير (pos_members) مع درجة العضو داخل متجره فقط. */
+async function syncPosMember(storeId: string, userId: string, tier: TeamTier) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const posRole = TEAM_TIERS[tier].posRole;
+  const { data: existing } = await supabaseAdmin
+    .from("pos_members")
+    .select("id")
+    .eq("store_id", storeId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (existing) {
+    await supabaseAdmin
+      .from("pos_members")
+      .update({ role: posRole, is_active: true })
+      .eq("id", existing.id);
+  } else {
+    await supabaseAdmin
+      .from("pos_members")
+      .insert({ store_id: storeId, user_id: userId, role: posRole, is_active: true });
+  }
+}
+
 export const storeAdminTeam = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => storeSlugInput.parse(input))
@@ -595,7 +628,20 @@ export const storeAdminTeam = createServerFn({ method: "GET" })
       .select("id, user_id, email, full_name, role, active, created_at")
       .eq("store_id", access.storeId)
       .order("created_at", { ascending: true });
-    return { role: access.role, members: rows ?? [] };
+
+    const { data: posRows } = await supabaseAdmin
+      .from("pos_members")
+      .select("user_id, role, is_active")
+      .eq("store_id", access.storeId);
+
+    const members = (rows ?? []).map((row) => {
+      const pos = (posRows ?? []).find((p) => p.user_id === row.user_id);
+      const tier: TeamTier =
+        pos?.role === "store_owner" ? "owner" : row.role === "store_admin" ? "manager" : "cashier";
+      return { ...row, tier, posRole: pos?.role ?? null, posActive: pos?.is_active ?? false };
+    });
+
+    return { role: access.role, members };
   });
 
 export const storeAdminAddMember = createServerFn({ method: "POST" })
@@ -605,7 +651,7 @@ export const storeAdminAddMember = createServerFn({ method: "POST" })
       .extend({
         email: z.string().email().max(160),
         fullName: z.string().max(120).default(""),
-        role: z.enum(["store_admin", "store_staff"]),
+        tier: z.enum(["owner", "manager", "cashier"]).default("cashier"),
         password: z.string().min(8).max(72).optional(),
       })
       .parse(input),
@@ -651,7 +697,7 @@ export const storeAdminAddMember = createServerFn({ method: "POST" })
     if (existing) {
       const { error } = await supabaseAdmin
         .from("store_users")
-        .update({ role: data.role, active: true, email, full_name: data.fullName })
+        .update({ role: TEAM_TIERS[data.tier].storeRole, active: true, email, full_name: data.fullName })
         .eq("id", existing.id);
       if (error) throw new Error("SAVE_FAILED");
     } else {
@@ -660,15 +706,17 @@ export const storeAdminAddMember = createServerFn({ method: "POST" })
         user_id: userId,
         email,
         full_name: data.fullName,
-        role: data.role,
+        role: TEAM_TIERS[data.tier].storeRole,
         active: true,
       });
       if (error) throw new Error("SAVE_FAILED");
     }
 
+    await syncPosMember(access.storeId, userId, data.tier);
+
     await logStoreActivity(access, context.claims.email ?? "", "team_member_upsert", {
       email,
-      role: data.role,
+      tier: data.tier,
     });
     return { ok: true };
   });
@@ -679,7 +727,7 @@ export const storeAdminUpdateMember = createServerFn({ method: "POST" })
     storeSlugInput
       .extend({
         id: z.string().uuid(),
-        role: z.enum(["store_admin", "store_staff"]).optional(),
+        tier: z.enum(["owner", "manager", "cashier"]).optional(),
         active: z.boolean().optional(),
       })
       .parse(input),
@@ -706,12 +754,21 @@ export const storeAdminUpdateMember = createServerFn({ method: "POST" })
       throw new Error("CANNOT_DISABLE_SELF");
 
     const patch: { role?: "store_admin" | "store_staff"; active?: boolean } = {};
-    if (data.role) patch.role = data.role;
+    if (data.tier) patch.role = TEAM_TIERS[data.tier].storeRole;
     if (typeof data.active === "boolean") patch.active = data.active;
     if (Object.keys(patch).length === 0) return { ok: true };
 
     const { error } = await supabaseAdmin.from("store_users").update(patch).eq("id", data.id);
     if (error) throw new Error("SAVE_FAILED");
+
+    if (data.tier) await syncPosMember(access.storeId, member.user_id, data.tier);
+    if (data.active === false) {
+      await supabaseAdmin
+        .from("pos_members")
+        .update({ is_active: false })
+        .eq("store_id", access.storeId)
+        .eq("user_id", member.user_id);
+    }
     await logStoreActivity(access, context.claims.email ?? "", "team_member_update", { ...patch });
     return { ok: true };
   });
@@ -740,6 +797,11 @@ export const storeAdminRemoveMember = createServerFn({ method: "POST" })
 
     const { error } = await supabaseAdmin.from("store_users").delete().eq("id", data.id);
     if (error) throw new Error("DELETE_FAILED");
+    await supabaseAdmin
+      .from("pos_members")
+      .delete()
+      .eq("store_id", access.storeId)
+      .eq("user_id", member.user_id);
     await logStoreActivity(access, context.claims.email ?? "", "team_member_remove", {
       email: member.email,
     });
