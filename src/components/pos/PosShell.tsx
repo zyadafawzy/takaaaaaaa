@@ -28,20 +28,38 @@ export function usePos(): PosBootstrapContext {
   return value;
 }
 
-const NAV = [
-  { to: "/pos", label: "الكاشير", exact: true },
-  { to: "/pos/invoices", label: "الفواتير", exact: false },
-  { to: "/pos/customers", label: "العملاء", exact: false },
-  { to: "/pos/suppliers", label: "الموردون", exact: false },
-  { to: "/pos/purchases", label: "المشتريات", exact: false },
-  { to: "/pos/inventory", label: "المخزون", exact: false },
-  { to: "/pos/unknown", label: "أصناف مجهولة", exact: false },
-  { to: "/pos/damaged", label: "هوالك وتالف", exact: false },
-  { to: "/pos/reports", label: "التقارير", exact: false },
-  { to: "/pos/settings", label: "الإعدادات", exact: false },
+const NAV_ITEMS = [
+  { suffix: "", label: "الكاشير", exact: true },
+  { suffix: "/invoices", label: "الفواتير", exact: false },
+  { suffix: "/customers", label: "العملاء", exact: false },
+  { suffix: "/suppliers", label: "الموردون", exact: false },
+  { suffix: "/purchases", label: "المشتريات", exact: false },
+  { suffix: "/inventory", label: "المخزون", exact: false },
+  { suffix: "/unknown", label: "أصناف مجهولة", exact: false },
+  { suffix: "/damaged", label: "هوالك وتالف", exact: false },
+  { suffix: "/reports", label: "التقارير", exact: false },
+  { suffix: "/settings", label: "الإعدادات", exact: false },
 ] as const;
 
-export function PosShell({ children }: { children: ReactNode }) {
+export type PosShellProps = {
+  children: ReactNode;
+  /** لما تتحدد، الشاشة تشتغل على المتجر ده بس (نسخة جوّه لوحة المتجر). */
+  storeSlug?: string;
+  /** أساس الروابط في التنقل. */
+  basePath?: string;
+  /** إخفاء الهيدر العام (اللوجو والخروج) لما نكون جوّه لوحة تانية. */
+  embedded?: boolean;
+  /** قيم الـ params للروابط لو المسار فيه params. */
+  linkParams?: Record<string, string>;
+};
+
+export function PosShell({
+  children,
+  storeSlug,
+  basePath = "/pos",
+  embedded = false,
+  linkParams,
+}: PosShellProps) {
   const [ready, setReady] = useState(false);
   const [signedIn, setSignedIn] = useState(false);
   const [boot, setBoot] = useState<Awaited<ReturnType<typeof posBootstrap>> | null>(null);
@@ -59,20 +77,37 @@ export function PosShell({ children }: { children: ReactNode }) {
       }
       setSignedIn(true);
       try {
-        const result = await posBootstrap({ data: nextStoreId ? { storeId: nextStoreId } : {} });
+        let result = await posBootstrap({ data: nextStoreId ? { storeId: nextStoreId } : {} });
+        let active = nextStoreId ?? result.memberships[0]?.storeId ?? null;
+
+        // نسخة جوّه لوحة متجر: نلتزم بمتجر المسار بس.
+        if (!nextStoreId && storeSlug) {
+          const scoped = result.memberships.find((m) => m.storeSlug === storeSlug);
+          if (!scoped) {
+            setBoot(result);
+            setStoreId(null);
+            setReady(true);
+            return;
+          }
+          if (scoped.storeId !== active) {
+            result = await posBootstrap({ data: { storeId: scoped.storeId } });
+          }
+          active = scoped.storeId;
+        }
+
         setBoot(result);
-        const active = nextStoreId ?? result.memberships[0]?.storeId ?? null;
         setStoreId(active);
+        const loaded = result;
         setBranchId((current) => {
-          if (current && result.branches.some((b) => b.id === current)) return current;
-          return result.openShift?.branchId ?? result.branches[0]?.id ?? null;
+          if (current && loaded.branches.some((b) => b.id === current)) return current;
+          return loaded.openShift?.branchId ?? loaded.branches[0]?.id ?? null;
         });
       } catch {
         toast.error("مقدرناش نحمّل بيانات نقاط البيع.");
       }
       setReady(true);
     },
-    [],
+    [storeSlug],
   );
 
   useEffect(() => {
@@ -107,18 +142,23 @@ export function PosShell({ children }: { children: ReactNode }) {
 
   if (!signedIn) return <PosSignIn />;
 
-  if (!boot || boot.memberships.length === 0) {
+  if (!boot || boot.memberships.length === 0 || (storeSlug && !storeId)) {
+    const scopedDenied = Boolean(storeSlug) && Boolean(boot) && boot!.memberships.length > 0;
     return (
       <div className="mx-auto max-w-lg space-y-4 p-10 text-center">
-        <Logo />
+        {embedded ? null : <Logo />}
         <h1 className="text-2xl font-extrabold">مفيش صلاحية على نقاط البيع</h1>
         <p className="text-muted-foreground">
-          حسابك مسجّل، لكنه مش مضاف لأي متجر في نظام الكاشير. اطلب من صاحب المتجر يضيفك من صفحة الإعدادات.
+          {scopedDenied
+            ? "حسابك مش مضاف لنقاط البيع بتاعة المتجر ده. اطلب من صاحب المتجر يضيفك للفريق."
+            : "حسابك مسجّل، لكنه مش مضاف لأي متجر في نظام الكاشير. اطلب من صاحب المتجر يضيفك من صفحة الإعدادات."}
         </p>
-        <Button variant="outline" onClick={() => void supabase.auth.signOut()}>
-          <LogOut className="size-4" />
-          خروج
-        </Button>
+        {embedded ? null : (
+          <Button variant="outline" onClick={() => void supabase.auth.signOut()}>
+            <LogOut className="size-4" />
+            خروج
+          </Button>
+        )}
       </div>
     );
   }
@@ -127,16 +167,16 @@ export function PosShell({ children }: { children: ReactNode }) {
 
   return (
     <PosContext.Provider value={value}>
-      <div className="min-h-screen bg-background">
+      <div className={embedded ? "bg-background" : "min-h-screen bg-background"}>
         <header className="border-b border-border bg-card">
           <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-3 px-4 py-3">
-            <Logo />
+            {embedded ? null : <Logo />}
             <div className="flex-1">
               <p className="text-sm font-bold">{value.storeName}</p>
               <p className="text-xs text-muted-foreground">{POS_ROLE_LABELS[value.role]}</p>
             </div>
 
-            {value.memberships.length > 1 ? (
+            {!embedded && value.memberships.length > 1 ? (
               <select
                 aria-label="اختيار المتجر"
                 className="h-9 rounded-md border border-input bg-background px-2 text-sm"
@@ -170,15 +210,23 @@ export function PosShell({ children }: { children: ReactNode }) {
               <RefreshCw className="size-4" />
               تحديث
             </Button>
-            <Button size="sm" variant="ghost" onClick={() => void supabase.auth.signOut()}>
-              <LogOut className="size-4" />
-              خروج
-            </Button>
+            {embedded ? null : (
+              <Button size="sm" variant="ghost" onClick={() => void supabase.auth.signOut()}>
+                <LogOut className="size-4" />
+                خروج
+              </Button>
+            )}
           </div>
 
           <nav className="mx-auto flex max-w-7xl gap-1 overflow-x-auto px-4 pb-2">
-            {NAV.map((item) => (
-              <PosNavLink key={item.to} to={item.to} label={item.label} exact={item.exact} />
+            {NAV_ITEMS.map((item) => (
+              <PosNavLink
+                key={item.suffix}
+                to={`${basePath}${item.suffix}`}
+                label={item.label}
+                exact={item.exact}
+                {...(linkParams ? { params: linkParams } : {})}
+              />
             ))}
           </nav>
         </header>
@@ -193,12 +241,26 @@ export function PosShell({ children }: { children: ReactNode }) {
   );
 }
 
-function PosNavLink({ to, label, exact }: { to: string; label: string; exact: boolean }) {
+function PosNavLink({
+  to,
+  label,
+  exact,
+  params,
+}: {
+  to: string;
+  label: string;
+  exact: boolean;
+  params?: Record<string, string>;
+}) {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
-  const active = exact ? pathname === to : pathname.startsWith(to);
+  const resolved = params
+    ? Object.entries(params).reduce((acc, [key, val]) => acc.replaceAll(`$${key}`, val), to)
+    : to;
+  const active = exact ? pathname === resolved : pathname.startsWith(resolved);
   return (
     <Link
-      to={to}
+      to={to as never}
+      params={params as never}
       className={`whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
         active ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
       }`}

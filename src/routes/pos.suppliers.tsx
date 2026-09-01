@@ -26,7 +26,7 @@ export const Route = createFileRoute("/pos/suppliers")({
 
 type Supplier = Awaited<ReturnType<typeof posListSuppliers>>[number];
 
-function SuppliersPage() {
+export function SuppliersPage() {
   const pos = usePos();
   const [rows, setRows] = useState<Supplier[]>([]);
   const [form, setForm] = useState({ name: "", phone: "", address: "", taxNumber: "" });

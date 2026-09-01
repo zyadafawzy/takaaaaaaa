@@ -33,7 +33,7 @@ function todayCairo(): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Cairo" }).format(new Date());
 }
 
-function PurchasesPage() {
+export function PurchasesPage() {
   const pos = usePos();
   const [rows, setRows] = useState<Purchase[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);

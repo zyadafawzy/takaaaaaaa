@@ -12,6 +12,7 @@ import {
   Megaphone,
   Users,
   Store as StoreIcon,
+  ScanBarcode,
   ShieldCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,7 @@ const tabs: Tab[] = [
   { to: "/s/$storeSlug/admin/orders", label: "الطلبات", icon: ShoppingBag, primary: true },
   { to: "/s/$storeSlug/admin/delivery", label: "شاشة التوصيل", icon: Truck, primary: true },
   { to: "/s/$storeSlug/admin/catalog", label: "المنتجات", icon: Package, primary: true },
+  { to: "/s/$storeSlug/admin/pos", label: "الكاشير (POS)", icon: ScanBarcode, primary: true },
   { to: "/s/$storeSlug/admin/reports", label: "التقارير", icon: BarChart3, primary: true },
   { to: "/s/$storeSlug/admin/announcements", label: "الإعلانات", icon: Megaphone },
   { to: "/s/$storeSlug/admin/team", label: "الفريق", icon: Users },

@@ -27,7 +27,7 @@ export const Route = createFileRoute("/pos/damaged")({
 type Row = Awaited<ReturnType<typeof posListDamaged>>[number];
 type Found = Awaited<ReturnType<typeof posSearchVariants>>[number];
 
-function DamagedPage() {
+export function DamagedPage() {
   const pos = usePos();
   const [rows, setRows] = useState<Row[]>([]);
   const [busy, setBusy] = useState(false);
