@@ -79,5 +79,29 @@ export async function issueStoreAdminSession(
     });
   }
 
+  // 3) صلاحية الكاشير لهذا المتجر فقط — من غير أي وصول لمتاجر تانية.
+  const posMember = await supabaseAdmin
+    .from("pos_members")
+    .select("id, is_active, role")
+    .eq("store_id", storeId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (posMember.data) {
+    if (!posMember.data.is_active || posMember.data.role !== "store_owner") {
+      await supabaseAdmin
+        .from("pos_members")
+        .update({ is_active: true, role: "store_owner" })
+        .eq("id", posMember.data.id);
+    }
+  } else {
+    await supabaseAdmin.from("pos_members").insert({
+      store_id: storeId,
+      user_id: userId,
+      role: "store_owner",
+      is_active: true,
+    });
+  }
+
   return { email, password };
 }
