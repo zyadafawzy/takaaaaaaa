@@ -19,6 +19,7 @@ import { Route as DeliveryRouteImport } from './routes/delivery'
 import { Route as DeveloperRouteImport } from './routes/developer'
 import { Route as FreshnessRouteImport } from './routes/freshness'
 import { Route as OwnerSetupRouteImport } from './routes/owner-setup'
+import { Route as PosRouteImport } from './routes/pos'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as TermsRouteImport } from './routes/terms'
@@ -37,6 +38,14 @@ import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
 import { Route as CategorySlugRouteImport } from './routes/category.$slug'
 import { Route as DeveloperIndexRouteImport } from './routes/developer.index'
 import { Route as DeveloperNewRouteImport } from './routes/developer.new'
+import { Route as PosIndexRouteImport } from './routes/pos.index'
+import { Route as PosCustomersRouteImport } from './routes/pos.customers'
+import { Route as PosInventoryRouteImport } from './routes/pos.inventory'
+import { Route as PosInvoicesRouteImport } from './routes/pos.invoices'
+import { Route as PosPurchasesRouteImport } from './routes/pos.purchases'
+import { Route as PosReportsRouteImport } from './routes/pos.reports'
+import { Route as PosSettingsRouteImport } from './routes/pos.settings'
+import { Route as PosSuppliersRouteImport } from './routes/pos.suppliers'
 import { Route as ProductSlugRouteImport } from './routes/product.$slug'
 import { Route as SStoreSlugRouteImport } from './routes/s.$storeSlug'
 import { Route as TrackTokenRouteImport } from './routes/track.$token'
@@ -112,6 +121,11 @@ const FreshnessRoute = FreshnessRouteImport.update({
 const OwnerSetupRoute = OwnerSetupRouteImport.update({
   id: '/owner-setup',
   path: '/owner-setup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PosRoute = PosRouteImport.update({
+  id: '/pos',
+  path: '/pos',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacyRoute = PrivacyRouteImport.update({
@@ -203,6 +217,46 @@ const DeveloperNewRoute = DeveloperNewRouteImport.update({
   id: '/new',
   path: '/new',
   getParentRoute: () => DeveloperRoute,
+} as any)
+const PosIndexRoute = PosIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => PosRoute,
+} as any)
+const PosCustomersRoute = PosCustomersRouteImport.update({
+  id: '/customers',
+  path: '/customers',
+  getParentRoute: () => PosRoute,
+} as any)
+const PosInventoryRoute = PosInventoryRouteImport.update({
+  id: '/inventory',
+  path: '/inventory',
+  getParentRoute: () => PosRoute,
+} as any)
+const PosInvoicesRoute = PosInvoicesRouteImport.update({
+  id: '/invoices',
+  path: '/invoices',
+  getParentRoute: () => PosRoute,
+} as any)
+const PosPurchasesRoute = PosPurchasesRouteImport.update({
+  id: '/purchases',
+  path: '/purchases',
+  getParentRoute: () => PosRoute,
+} as any)
+const PosReportsRoute = PosReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => PosRoute,
+} as any)
+const PosSettingsRoute = PosSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => PosRoute,
+} as any)
+const PosSuppliersRoute = PosSuppliersRouteImport.update({
+  id: '/suppliers',
+  path: '/suppliers',
+  getParentRoute: () => PosRoute,
 } as any)
 const ProductSlugRoute = ProductSlugRouteImport.update({
   id: '/product/$slug',
@@ -347,6 +401,7 @@ export interface FileRoutesByFullPath {
   '/developer': typeof DeveloperRouteWithChildren
   '/freshness': typeof FreshnessRoute
   '/owner-setup': typeof OwnerSetupRoute
+  '/pos': typeof PosRouteWithChildren
   '/privacy': typeof PrivacyRoute
   '/search': typeof SearchRoute
   '/terms': typeof TermsRoute
@@ -363,11 +418,19 @@ export interface FileRoutesByFullPath {
   '/admin/settings': typeof AdminSettingsRoute
   '/category/$slug': typeof CategorySlugRoute
   '/developer/new': typeof DeveloperNewRoute
+  '/pos/customers': typeof PosCustomersRoute
+  '/pos/inventory': typeof PosInventoryRoute
+  '/pos/invoices': typeof PosInvoicesRoute
+  '/pos/purchases': typeof PosPurchasesRoute
+  '/pos/reports': typeof PosReportsRoute
+  '/pos/settings': typeof PosSettingsRoute
+  '/pos/suppliers': typeof PosSuppliersRoute
   '/product/$slug': typeof ProductSlugRoute
   '/s/$storeSlug': typeof SStoreSlugRouteWithChildren
   '/track/$token': typeof TrackTokenRoute
   '/admin/': typeof AdminIndexRoute
   '/developer/': typeof DeveloperIndexRoute
+  '/pos/': typeof PosIndexRoute
   '/admin/catalog/$id': typeof AdminCatalogIdRoute
   '/admin/orders/$token': typeof AdminOrdersTokenRoute
   '/developer/stores/$id': typeof DeveloperStoresIdRoute
@@ -417,10 +480,18 @@ export interface FileRoutesByTo {
   '/admin/settings': typeof AdminSettingsRoute
   '/category/$slug': typeof CategorySlugRoute
   '/developer/new': typeof DeveloperNewRoute
+  '/pos/customers': typeof PosCustomersRoute
+  '/pos/inventory': typeof PosInventoryRoute
+  '/pos/invoices': typeof PosInvoicesRoute
+  '/pos/purchases': typeof PosPurchasesRoute
+  '/pos/reports': typeof PosReportsRoute
+  '/pos/settings': typeof PosSettingsRoute
+  '/pos/suppliers': typeof PosSuppliersRoute
   '/product/$slug': typeof ProductSlugRoute
   '/track/$token': typeof TrackTokenRoute
   '/admin': typeof AdminIndexRoute
   '/developer': typeof DeveloperIndexRoute
+  '/pos': typeof PosIndexRoute
   '/admin/catalog/$id': typeof AdminCatalogIdRoute
   '/admin/orders/$token': typeof AdminOrdersTokenRoute
   '/developer/stores/$id': typeof DeveloperStoresIdRoute
@@ -456,6 +527,7 @@ export interface FileRoutesById {
   '/developer': typeof DeveloperRouteWithChildren
   '/freshness': typeof FreshnessRoute
   '/owner-setup': typeof OwnerSetupRoute
+  '/pos': typeof PosRouteWithChildren
   '/privacy': typeof PrivacyRoute
   '/search': typeof SearchRoute
   '/terms': typeof TermsRoute
@@ -472,11 +544,19 @@ export interface FileRoutesById {
   '/admin/settings': typeof AdminSettingsRoute
   '/category/$slug': typeof CategorySlugRoute
   '/developer/new': typeof DeveloperNewRoute
+  '/pos/customers': typeof PosCustomersRoute
+  '/pos/inventory': typeof PosInventoryRoute
+  '/pos/invoices': typeof PosInvoicesRoute
+  '/pos/purchases': typeof PosPurchasesRoute
+  '/pos/reports': typeof PosReportsRoute
+  '/pos/settings': typeof PosSettingsRoute
+  '/pos/suppliers': typeof PosSuppliersRoute
   '/product/$slug': typeof ProductSlugRoute
   '/s/$storeSlug': typeof SStoreSlugRouteWithChildren
   '/track/$token': typeof TrackTokenRoute
   '/admin/': typeof AdminIndexRoute
   '/developer/': typeof DeveloperIndexRoute
+  '/pos/': typeof PosIndexRoute
   '/admin/catalog/$id': typeof AdminCatalogIdRoute
   '/admin/orders/$token': typeof AdminOrdersTokenRoute
   '/developer/stores/$id': typeof DeveloperStoresIdRoute
@@ -514,6 +594,7 @@ export interface FileRouteTypes {
     | '/developer'
     | '/freshness'
     | '/owner-setup'
+    | '/pos'
     | '/privacy'
     | '/search'
     | '/terms'
@@ -530,11 +611,19 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/category/$slug'
     | '/developer/new'
+    | '/pos/customers'
+    | '/pos/inventory'
+    | '/pos/invoices'
+    | '/pos/purchases'
+    | '/pos/reports'
+    | '/pos/settings'
+    | '/pos/suppliers'
     | '/product/$slug'
     | '/s/$storeSlug'
     | '/track/$token'
     | '/admin/'
     | '/developer/'
+    | '/pos/'
     | '/admin/catalog/$id'
     | '/admin/orders/$token'
     | '/developer/stores/$id'
@@ -584,10 +673,18 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/category/$slug'
     | '/developer/new'
+    | '/pos/customers'
+    | '/pos/inventory'
+    | '/pos/invoices'
+    | '/pos/purchases'
+    | '/pos/reports'
+    | '/pos/settings'
+    | '/pos/suppliers'
     | '/product/$slug'
     | '/track/$token'
     | '/admin'
     | '/developer'
+    | '/pos'
     | '/admin/catalog/$id'
     | '/admin/orders/$token'
     | '/developer/stores/$id'
@@ -622,6 +719,7 @@ export interface FileRouteTypes {
     | '/developer'
     | '/freshness'
     | '/owner-setup'
+    | '/pos'
     | '/privacy'
     | '/search'
     | '/terms'
@@ -638,11 +736,19 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/category/$slug'
     | '/developer/new'
+    | '/pos/customers'
+    | '/pos/inventory'
+    | '/pos/invoices'
+    | '/pos/purchases'
+    | '/pos/reports'
+    | '/pos/settings'
+    | '/pos/suppliers'
     | '/product/$slug'
     | '/s/$storeSlug'
     | '/track/$token'
     | '/admin/'
     | '/developer/'
+    | '/pos/'
     | '/admin/catalog/$id'
     | '/admin/orders/$token'
     | '/developer/stores/$id'
@@ -679,6 +785,7 @@ export interface RootRouteChildren {
   DeveloperRoute: typeof DeveloperRouteWithChildren
   FreshnessRoute: typeof FreshnessRoute
   OwnerSetupRoute: typeof OwnerSetupRoute
+  PosRoute: typeof PosRouteWithChildren
   PrivacyRoute: typeof PrivacyRoute
   SearchRoute: typeof SearchRoute
   TermsRoute: typeof TermsRoute
@@ -762,6 +869,13 @@ declare module '@tanstack/react-router' {
       path: '/owner-setup'
       fullPath: '/owner-setup'
       preLoaderRoute: typeof OwnerSetupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pos': {
+      id: '/pos'
+      path: '/pos'
+      fullPath: '/pos'
+      preLoaderRoute: typeof PosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacy': {
@@ -889,6 +1003,62 @@ declare module '@tanstack/react-router' {
       fullPath: '/developer/new'
       preLoaderRoute: typeof DeveloperNewRouteImport
       parentRoute: typeof DeveloperRoute
+    }
+    '/pos/': {
+      id: '/pos/'
+      path: '/'
+      fullPath: '/pos/'
+      preLoaderRoute: typeof PosIndexRouteImport
+      parentRoute: typeof PosRoute
+    }
+    '/pos/customers': {
+      id: '/pos/customers'
+      path: '/customers'
+      fullPath: '/pos/customers'
+      preLoaderRoute: typeof PosCustomersRouteImport
+      parentRoute: typeof PosRoute
+    }
+    '/pos/inventory': {
+      id: '/pos/inventory'
+      path: '/inventory'
+      fullPath: '/pos/inventory'
+      preLoaderRoute: typeof PosInventoryRouteImport
+      parentRoute: typeof PosRoute
+    }
+    '/pos/invoices': {
+      id: '/pos/invoices'
+      path: '/invoices'
+      fullPath: '/pos/invoices'
+      preLoaderRoute: typeof PosInvoicesRouteImport
+      parentRoute: typeof PosRoute
+    }
+    '/pos/purchases': {
+      id: '/pos/purchases'
+      path: '/purchases'
+      fullPath: '/pos/purchases'
+      preLoaderRoute: typeof PosPurchasesRouteImport
+      parentRoute: typeof PosRoute
+    }
+    '/pos/reports': {
+      id: '/pos/reports'
+      path: '/reports'
+      fullPath: '/pos/reports'
+      preLoaderRoute: typeof PosReportsRouteImport
+      parentRoute: typeof PosRoute
+    }
+    '/pos/settings': {
+      id: '/pos/settings'
+      path: '/settings'
+      fullPath: '/pos/settings'
+      preLoaderRoute: typeof PosSettingsRouteImport
+      parentRoute: typeof PosRoute
+    }
+    '/pos/suppliers': {
+      id: '/pos/suppliers'
+      path: '/suppliers'
+      fullPath: '/pos/suppliers'
+      preLoaderRoute: typeof PosSuppliersRouteImport
+      parentRoute: typeof PosRoute
     }
     '/product/$slug': {
       id: '/product/$slug'
@@ -1147,6 +1317,30 @@ const DeveloperRouteWithChildren = DeveloperRoute._addFileChildren(
   DeveloperRouteChildren,
 )
 
+interface PosRouteChildren {
+  PosCustomersRoute: typeof PosCustomersRoute
+  PosInventoryRoute: typeof PosInventoryRoute
+  PosInvoicesRoute: typeof PosInvoicesRoute
+  PosPurchasesRoute: typeof PosPurchasesRoute
+  PosReportsRoute: typeof PosReportsRoute
+  PosSettingsRoute: typeof PosSettingsRoute
+  PosSuppliersRoute: typeof PosSuppliersRoute
+  PosIndexRoute: typeof PosIndexRoute
+}
+
+const PosRouteChildren: PosRouteChildren = {
+  PosCustomersRoute: PosCustomersRoute,
+  PosInventoryRoute: PosInventoryRoute,
+  PosInvoicesRoute: PosInvoicesRoute,
+  PosPurchasesRoute: PosPurchasesRoute,
+  PosReportsRoute: PosReportsRoute,
+  PosSettingsRoute: PosSettingsRoute,
+  PosSuppliersRoute: PosSuppliersRoute,
+  PosIndexRoute: PosIndexRoute,
+}
+
+const PosRouteWithChildren = PosRoute._addFileChildren(PosRouteChildren)
+
 interface SStoreSlugAdminRouteChildren {
   SStoreSlugAdminAnnouncementsRoute: typeof SStoreSlugAdminAnnouncementsRoute
   SStoreSlugAdminCatalogRoute: typeof SStoreSlugAdminCatalogRoute
@@ -1210,6 +1404,7 @@ const rootRouteChildren: RootRouteChildren = {
   DeveloperRoute: DeveloperRouteWithChildren,
   FreshnessRoute: FreshnessRoute,
   OwnerSetupRoute: OwnerSetupRoute,
+  PosRoute: PosRouteWithChildren,
   PrivacyRoute: PrivacyRoute,
   SearchRoute: SearchRoute,
   TermsRoute: TermsRoute,
