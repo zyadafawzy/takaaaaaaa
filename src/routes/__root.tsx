@@ -144,6 +144,7 @@ function RootComponent() {
   const isStandalone =
     pathname.startsWith("/admin") ||
     pathname.startsWith("/developer") ||
+    pathname.startsWith("/pos") ||
     pathname.startsWith("/s/");
 
   return (
