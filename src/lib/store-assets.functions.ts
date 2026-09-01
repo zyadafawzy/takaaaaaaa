@@ -4,7 +4,12 @@ import { storeSlugInput } from "./store-admin.schemas";
 
 export const storeAdminLoginByPassword = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) =>
-    storeSlugInput.extend({ username: z.string().regex(/^[a-zA-Z0-9_-]{3,32}$/) }).parse(input),
+    storeSlugInput
+      .extend({
+        username: z.string().regex(/^[a-zA-Z0-9_-]{3,32}$/),
+        password: z.string().min(1).max(72),
+      })
+      .parse(input),
   )
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -12,7 +17,7 @@ export const storeAdminLoginByPassword = createServerFn({ method: "POST" })
 
     const { data: store, error } = await supabaseAdmin
       .from("stores")
-      .select("id, slug")
+      .select("id, slug, owner_name, admin_password_hash")
       .eq("slug", data.storeSlug)
       .maybeSingle();
 
@@ -28,7 +33,24 @@ export const storeAdminLoginByPassword = createServerFn({ method: "POST" })
       .eq("email", email)
       .eq("active", true)
       .maybeSingle();
-    if (!member) return { ok: false as const, error: "INVALID" };
+    if (!member) {
+      if (data.username.toLowerCase() !== "owner" || !store.admin_password_hash) {
+        return { ok: false as const, error: "INVALID" };
+      }
+      const { createHash } = await import("node:crypto");
+      const hash = createHash("sha256").update(data.password).digest("hex");
+      const matches =
+        store.admin_password_hash === data.password || store.admin_password_hash === hash;
+      if (!matches) return { ok: false as const, error: "INVALID" };
+
+      const { provisionStoreMemberAccount } = await import("./store-session.server");
+      await provisionStoreMemberAccount(store.id, store.slug, {
+        username: "owner",
+        password: data.password,
+        fullName: store.owner_name || "صاحب المتجر",
+        tier: "owner",
+      });
+    }
 
     return { ok: true as const, email };
   });

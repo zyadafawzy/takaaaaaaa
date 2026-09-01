@@ -104,7 +104,7 @@ function CreateStoreWizard() {
           productIds: Array.from(selected),
           zones,
           adminUsername: adminUsername.trim().toLowerCase(),
-          ...(adminPassword.trim().length >= 4 ? { adminPassword: adminPassword.trim() } : {}),
+          adminPassword: adminPassword.trim(),
           ...(logo ? { logo: { fileName: logo.fileName, contentType: logo.contentType, base64: logo.base64 } } : {}),
         },
       }),
@@ -471,7 +471,8 @@ function CreateStoreWizard() {
                   value={adminPassword}
                   onChange={(event) => setAdminPassword(event.target.value)}
                   dir="ltr"
-                  placeholder="4 حروف على الأقل"
+                  placeholder="8 حروف على الأقل"
+                  minLength={8}
                 />
                 <p className="text-[11px] text-muted-foreground">
                   الدخول من /s/{slug || "..."}/admin باسم المستخدم وكلمة المرور.
@@ -544,7 +545,7 @@ function CreateStoreWizard() {
         ) : (
           <Button
             className="ms-auto gap-1.5"
-            disabled={!identityValid || create.isPending}
+            disabled={!identityValid || adminUsername.length < 3 || adminPassword.length < 8 || create.isPending}
             onClick={() => create.mutate()}
           >
             {create.isPending ? (

@@ -96,7 +96,7 @@ export function StoreAdminLogin({ storeSlug, storeName }: { storeSlug: string; s
 
           try {
             const { storeAdminLoginByPassword } = await import("@/lib/store-assets.functions");
-            const result = await storeAdminLoginByPassword({ data: { storeSlug, username } });
+            const result = await storeAdminLoginByPassword({ data: { storeSlug, username, password } });
 
             if (result.ok) {
               const { supabase } = await import("@/integrations/supabase/client");

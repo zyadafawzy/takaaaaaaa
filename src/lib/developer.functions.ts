@@ -221,7 +221,7 @@ export const developerCreateStore = createServerFn({ method: "POST" })
         productIds: z.array(z.string().uuid()).max(5000).default([]),
         zones: z.array(zoneSchema).max(300).default([]),
         adminUsername: z.string().trim().toLowerCase().regex(/^[a-z0-9][a-z0-9_-]{2,31}$/),
-        adminPassword: z.string().min(4).max(72).optional(),
+        adminPassword: z.string().min(8).max(72),
         logo: logoSchema.optional(),
       })
       .parse(input),
@@ -250,7 +250,7 @@ export const developerCreateStore = createServerFn({ method: "POST" })
         maintenance_message: data.store.maintenanceMessage ?? "",
         plan: data.store.plan ?? "basic",
         features: (data.store.features ?? {}) as never,
-        ...(data.adminPassword ? { admin_password_hash: await hashPassword(data.adminPassword) } : {}),
+        admin_password_hash: await hashPassword(data.adminPassword),
       } as never)
       .select("id, slug")
       .single();
@@ -259,15 +259,13 @@ export const developerCreateStore = createServerFn({ method: "POST" })
       throw new Error(error?.code === "23505" ? "SLUG_TAKEN" : "STORE_CREATE_FAILED");
     }
 
-    if (data.adminPassword) {
-      const { provisionStoreMemberAccount } = await import("./store-session.server");
-      await provisionStoreMemberAccount(created.id, created.slug, {
-        username: data.adminUsername,
-        password: data.adminPassword,
-        fullName: data.store.ownerName || "صاحب المتجر",
-        tier: "owner",
-      });
-    }
+    const { provisionStoreMemberAccount } = await import("./store-session.server");
+    await provisionStoreMemberAccount(created.id, created.slug, {
+      username: data.adminUsername,
+      password: data.adminPassword,
+      fullName: data.store.ownerName || "صاحب المتجر",
+      tier: "owner",
+    });
 
     await supabaseAdmin.from("store_branding").upsert(brandingRow(created.id, data.branding) as never);
 
