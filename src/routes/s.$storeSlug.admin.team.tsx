@@ -200,9 +200,11 @@ function StoreAdminTeam() {
                   <SelectValue>{tierLabels[member.tier] ?? member.tier}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="store_staff">موظف</SelectItem>
-                  <SelectItem value="store_admin">مدير المتجر</SelectItem>
+                  <SelectItem value="cashier">كاشير</SelectItem>
+                  <SelectItem value="manager">مشرف / مدير فرع</SelectItem>
+                  <SelectItem value="owner">صاحب المتجر</SelectItem>
                 </SelectContent>
+
               </Select>
               <div className="flex items-center gap-2">
                 <Switch
