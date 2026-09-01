@@ -3610,6 +3610,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      pos_is_store_owner: {
+        Args: { _store_id: string; _user_id: string }
+        Returns: boolean
+      }
       pos_is_superadmin: { Args: { _user_id: string }; Returns: boolean }
       product_is_sellable: { Args: { _product_id: string }; Returns: boolean }
       rpc_adjust_stock: {
