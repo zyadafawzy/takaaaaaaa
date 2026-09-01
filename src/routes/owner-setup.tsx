@@ -82,7 +82,7 @@ function OwnerSetupPage() {
     void getInfo().then((info) => setMaskedEmail(info.maskedOwnerEmail));
     
     setLoadingStores(true);
-    supabase.from("stores").select("*").order("created_at", { ascending: false })
+    supabase.from("stores").select("id, slug, name, description, logo_url, favicon_url, features, address, governorate, phone, whatsapp_number, support_number, business_hours, contact_name, owner_name, plan, status, is_master, is_maintenance, maintenance_message, created_at, updated_at").order("created_at", { ascending: false })
       .then(({ data }) => {
         setStores(data || []);
         setLoadingStores(false);
@@ -306,7 +306,7 @@ function OwnerSetupPage() {
                         setStoreSlug("");
                         setSelectedLogo("");
                         setAiSamples([]);
-                        const { data } = await supabase.from("stores").select("*").order("created_at", { ascending: false });
+                        const { data } = await supabase.from("stores").select("id, slug, name, description, logo_url, favicon_url, features, address, governorate, phone, whatsapp_number, support_number, business_hours, contact_name, owner_name, plan, status, is_master, is_maintenance, maintenance_message, created_at, updated_at").order("created_at", { ascending: false });
                         setStores(data || []);
                       } else {
                         setCreateStoreMsg("خطأ: " + res.error);
