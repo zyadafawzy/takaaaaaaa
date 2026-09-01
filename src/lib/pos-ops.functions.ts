@@ -390,29 +390,3 @@ export const posMarkAlertOrdered = createServerFn({ method: "POST" })
     if (error) throw new Error("ALERT_UPDATE_FAILED");
     return { ok: true };
   });
-
-/* ==================== سجل الطباعة ==================== */
-
-export const posLogPrint = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
-    z
-      .object({
-        storeId: uuid,
-        invoiceId: uuid.nullable().optional(),
-        documentType: z.enum(["invoice", "reprint", "shift_report", "daily_report"]).default("invoice"),
-        paperSize: z.enum(["80mm", "58mm", "A4"]).default("80mm"),
-      })
-      .parse(input),
-  )
-  .handler(async ({ data, context }) => {
-    const { error } = await context.supabase.from("print_logs").insert({
-      store_id: data.storeId,
-      invoice_id: data.invoiceId ?? null,
-      document_type: data.documentType,
-      printed_by: context.userId,
-      paper_size: data.paperSize,
-    } as never);
-    if (error) return { ok: false };
-    return { ok: true };
-  });
