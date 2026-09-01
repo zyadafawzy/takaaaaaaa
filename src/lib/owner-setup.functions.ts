@@ -16,7 +16,8 @@ const createStoreSchema = z.object({
   ownerName: z.string(),
   governorate: z.string(),
   region: z.string(),
-  adminPassword: z.string().min(4),
+  adminUsername: z.string().trim().toLowerCase().regex(/^[a-z0-9][a-z0-9_-]{2,31}$/),
+  adminPassword: z.string().min(8),
   logoUrl: z.string().optional(),
 });
 
@@ -69,7 +70,6 @@ export const ownerCreateStore = createServerFn({ method: "POST" })
       .insert({
         name: data.name,
         slug: data.slug,
-        admin_password_hash: data.adminPassword,
         logo_url: data.logoUrl ?? null,
         governorate: data.governorate,
         owner_name: data.ownerName,
@@ -95,6 +95,13 @@ export const ownerCreateStore = createServerFn({ method: "POST" })
       .single();
 
     if (error) return { ok: false, error: error.message };
+    const { provisionStoreMemberAccount } = await import("./store-session.server");
+    await provisionStoreMemberAccount(store.id, store.slug, {
+      username: data.adminUsername,
+      password: data.adminPassword,
+      fullName: data.ownerName || "صاحب المتجر",
+      tier: "owner",
+    });
     return { ok: true, store };
   });
 

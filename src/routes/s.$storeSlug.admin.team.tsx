@@ -141,8 +141,9 @@ function StoreAdminTeam() {
             <Label htmlFor="member-password">كلمة مرور مبدئية</Label>
             <Input
               id="member-password"
-              type="text"
+              type="password"
               dir="ltr"
+              autoComplete="new-password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               className="mt-1"
@@ -157,9 +158,9 @@ function StoreAdminTeam() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="cashier">كاشير</SelectItem>
-                <SelectItem value="manager">مشرف / مدير فرع</SelectItem>
-                <SelectItem value="owner">صاحب المتجر</SelectItem>
+                  <SelectItem value="cashier">كاشير — البيع فقط</SelectItem>
+                  <SelectItem value="manager">مدير فرع — التشغيل والمخزون</SelectItem>
+                  <SelectItem value="owner">صاحب متجر — كل الصلاحيات</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -201,9 +202,9 @@ function StoreAdminTeam() {
                   <SelectValue>{tierLabels[member.tier] ?? member.tier}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="cashier">كاشير</SelectItem>
-                  <SelectItem value="manager">مشرف / مدير فرع</SelectItem>
-                  <SelectItem value="owner">صاحب المتجر</SelectItem>
+                  <SelectItem value="cashier">كاشير — البيع فقط</SelectItem>
+                  <SelectItem value="manager">مدير فرع — التشغيل والمخزون</SelectItem>
+                  <SelectItem value="owner">صاحب متجر — كل الصلاحيات</SelectItem>
                 </SelectContent>
 
               </Select>
