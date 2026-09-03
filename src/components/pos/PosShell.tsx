@@ -19,6 +19,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { posBootstrap, posCloseShift, posOpenShift, posSetupStore } from "@/lib/pos.functions";
 import { formatPrice } from "@/lib/format";
 import { POS_ROLE_LABELS, type PosBootstrapContext } from "@/components/pos/pos-context";
+import { OfflineProvider } from "@/lib/offline/offline";
+import { OfflineBar } from "@/components/pos/OfflineBar";
 
 const PosContext = createContext<PosBootstrapContext | null>(null);
 
@@ -76,8 +78,18 @@ export function PosShell({
         return;
       }
       setSignedIn(true);
+      const cacheKey = `pos-boot-${storeSlug ?? "all"}`;
       try {
-        let result = await posBootstrap({ data: nextStoreId ? { storeId: nextStoreId } : {} });
+        let result: Awaited<ReturnType<typeof posBootstrap>>;
+        try {
+          result = await posBootstrap({ data: nextStoreId ? { storeId: nextStoreId } : {} });
+          window.localStorage.setItem(cacheKey, JSON.stringify(result));
+        } catch (error) {
+          const cached = window.localStorage.getItem(cacheKey);
+          if (!cached) throw error;
+          result = JSON.parse(cached) as Awaited<ReturnType<typeof posBootstrap>>;
+          toast.info("شغالين بالنسخة المحفوظة — النت مقطوع.");
+        }
         let active = nextStoreId ?? result.memberships[0]?.storeId ?? null;
 
         // نسخة جوّه لوحة متجر: نلتزم بمتجر المسار بس.
@@ -167,6 +179,7 @@ export function PosShell({
 
   return (
     <PosContext.Provider value={value}>
+     <OfflineProvider storeId={value.storeId} branchId={value.branchId}>
       <div className={embedded ? "bg-background" : "min-h-screen bg-background"}>
         <header className="border-b border-border bg-card">
           <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-3 px-4 py-3">
@@ -231,12 +244,15 @@ export function PosShell({
           </nav>
         </header>
 
+        <OfflineBar />
+
         {value.branches.length === 0 ? <PosSetupBanner storeId={value.storeId} onDone={value.refresh} /> : null}
 
         <ShiftBar busy={busy} setBusy={setBusy} />
 
         <main className="mx-auto max-w-7xl px-4 py-6">{children}</main>
       </div>
+     </OfflineProvider>
     </PosContext.Provider>
   );
 }
