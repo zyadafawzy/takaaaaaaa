@@ -43,6 +43,7 @@ import { Route as PosCustomersRouteImport } from './routes/pos.customers'
 import { Route as PosDamagedRouteImport } from './routes/pos.damaged'
 import { Route as PosInventoryRouteImport } from './routes/pos.inventory'
 import { Route as PosInvoicesRouteImport } from './routes/pos.invoices'
+import { Route as PosPendingRouteImport } from './routes/pos.pending'
 import { Route as PosPurchasesRouteImport } from './routes/pos.purchases'
 import { Route as PosReportsRouteImport } from './routes/pos.reports'
 import { Route as PosSettingsRouteImport } from './routes/pos.settings'
@@ -257,6 +258,11 @@ const PosInventoryRoute = PosInventoryRouteImport.update({
 const PosInvoicesRoute = PosInvoicesRouteImport.update({
   id: '/invoices',
   path: '/invoices',
+  getParentRoute: () => PosRoute,
+} as any)
+const PosPendingRoute = PosPendingRouteImport.update({
+  id: '/pending',
+  path: '/pending',
   getParentRoute: () => PosRoute,
 } as any)
 const PosPurchasesRoute = PosPurchasesRouteImport.update({
@@ -528,6 +534,7 @@ export interface FileRoutesByFullPath {
   '/pos/damaged': typeof PosDamagedRoute
   '/pos/inventory': typeof PosInventoryRoute
   '/pos/invoices': typeof PosInvoicesRoute
+  '/pos/pending': typeof PosPendingRoute
   '/pos/purchases': typeof PosPurchasesRoute
   '/pos/reports': typeof PosReportsRoute
   '/pos/settings': typeof PosSettingsRoute
@@ -606,6 +613,7 @@ export interface FileRoutesByTo {
   '/pos/damaged': typeof PosDamagedRoute
   '/pos/inventory': typeof PosInventoryRoute
   '/pos/invoices': typeof PosInvoicesRoute
+  '/pos/pending': typeof PosPendingRoute
   '/pos/purchases': typeof PosPurchasesRoute
   '/pos/reports': typeof PosReportsRoute
   '/pos/settings': typeof PosSettingsRoute
@@ -685,6 +693,7 @@ export interface FileRoutesById {
   '/pos/damaged': typeof PosDamagedRoute
   '/pos/inventory': typeof PosInventoryRoute
   '/pos/invoices': typeof PosInvoicesRoute
+  '/pos/pending': typeof PosPendingRoute
   '/pos/purchases': typeof PosPurchasesRoute
   '/pos/reports': typeof PosReportsRoute
   '/pos/settings': typeof PosSettingsRoute
@@ -768,6 +777,7 @@ export interface FileRouteTypes {
     | '/pos/damaged'
     | '/pos/inventory'
     | '/pos/invoices'
+    | '/pos/pending'
     | '/pos/purchases'
     | '/pos/reports'
     | '/pos/settings'
@@ -846,6 +856,7 @@ export interface FileRouteTypes {
     | '/pos/damaged'
     | '/pos/inventory'
     | '/pos/invoices'
+    | '/pos/pending'
     | '/pos/purchases'
     | '/pos/reports'
     | '/pos/settings'
@@ -924,6 +935,7 @@ export interface FileRouteTypes {
     | '/pos/damaged'
     | '/pos/inventory'
     | '/pos/invoices'
+    | '/pos/pending'
     | '/pos/purchases'
     | '/pos/reports'
     | '/pos/settings'
@@ -1237,6 +1249,13 @@ declare module '@tanstack/react-router' {
       path: '/invoices'
       fullPath: '/pos/invoices'
       preLoaderRoute: typeof PosInvoicesRouteImport
+      parentRoute: typeof PosRoute
+    }
+    '/pos/pending': {
+      id: '/pos/pending'
+      path: '/pending'
+      fullPath: '/pos/pending'
+      preLoaderRoute: typeof PosPendingRouteImport
       parentRoute: typeof PosRoute
     }
     '/pos/purchases': {
@@ -1634,6 +1653,7 @@ interface PosRouteChildren {
   PosDamagedRoute: typeof PosDamagedRoute
   PosInventoryRoute: typeof PosInventoryRoute
   PosInvoicesRoute: typeof PosInvoicesRoute
+  PosPendingRoute: typeof PosPendingRoute
   PosPurchasesRoute: typeof PosPurchasesRoute
   PosReportsRoute: typeof PosReportsRoute
   PosSettingsRoute: typeof PosSettingsRoute
@@ -1647,6 +1667,7 @@ const PosRouteChildren: PosRouteChildren = {
   PosDamagedRoute: PosDamagedRoute,
   PosInventoryRoute: PosInventoryRoute,
   PosInvoicesRoute: PosInvoicesRoute,
+  PosPendingRoute: PosPendingRoute,
   PosPurchasesRoute: PosPurchasesRoute,
   PosReportsRoute: PosReportsRoute,
   PosSettingsRoute: PosSettingsRoute,
