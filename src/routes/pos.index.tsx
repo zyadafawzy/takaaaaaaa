@@ -300,31 +300,52 @@ export function CashierPage() {
   };
 
   const checkout = async (payments: PaymentSplit[]) => {
-    if (!pos.shift) {
+    const localShift = offline?.localShift ?? null;
+    if (!pos.shift && !localShift) {
       toast.error("افتح وردية الأول.");
       return;
     }
     setBusy(true);
-    const payload = {
-          storeId: pos.storeId,
-          branchId: pos.branchId,
-          shiftId: pos.shift.id,
-          customerId: customer?.id ?? null,
-          discountAmount: discount,
-          taxAmount: 0,
-          lines: lines.map((line) => ({
-            variantId: line.variantId,
-            productId: line.productId,
-            productName: line.productName,
-            unitLabel: line.unitLabel,
-            sellPrice: line.sellPrice,
-            costPrice: line.costPrice ?? null,
-            qty: line.qty,
-            discountPct: line.discountPct,
-            barcode: line.barcode ?? null,
-          })),
-          unknownLines,
-          payments: payments.map((p) => ({ methodId: p.methodId, amount: p.amount })),
+
+    const clientInvoiceId = `${pos.storeId.slice(0, 8)}-${Date.now().toString(36)}-${Math.random()
+      .toString(36)
+      .slice(2, 8)}`;
+
+    const basePayload = {
+      storeId: pos.storeId,
+      branchId: pos.branchId,
+      shiftId: pos.shift?.id ?? null,
+      clientInvoiceId,
+      customerId: customer?.id ?? null,
+      discountAmount: discount,
+      taxAmount: 0,
+      lines: lines.map((line) => ({
+        variantId: line.variantId,
+        productId: line.productId,
+        productName: line.productName,
+        unitLabel: line.unitLabel,
+        sellPrice: line.sellPrice,
+        costPrice: line.costPrice ?? null,
+        qty: line.qty,
+        discountPct: line.discountPct,
+        barcode: line.barcode ?? null,
+      })),
+      unknownLines,
+      payments: payments.map((p) => ({ methodId: p.methodId, amount: p.amount })),
+    };
+
+    const offlinePayload = {
+      ...basePayload,
+      isOffline: true,
+      ...(localShift
+        ? {
+            offlineShift: {
+              clientShiftId: localShift.clientShiftId,
+              openedAt: localShift.openedAt,
+              openingAmount: localShift.openingAmount,
+            },
+          }
+        : {}),
     };
 
     const queueOffline = async (reason: string) => {
@@ -333,7 +354,13 @@ export function CashierPage() {
         return;
       }
       const localNumber = `OFF-${Date.now().toString(36).toUpperCase()}`;
-      await offline.queueInvoice({ storeId: pos.storeId, localNumber, total, payload: payload as never });
+      await offline.queueInvoice({
+        storeId: pos.storeId,
+        localNumber,
+        clientInvoiceId,
+        total,
+        payload: offlinePayload as unknown as Record<string, unknown>,
+      });
       const localInvoice = buildLocalInvoice(payments, localNumber);
       setLastInvoice(localInvoice);
       clearCart();
@@ -342,41 +369,22 @@ export function CashierPage() {
       if (isAutoPrintEnabled()) window.setTimeout(() => void printInvoice(null), 250);
     };
 
-    if (offline && !offline.isOnline) {
+    if ((offline && !offline.isOnline) || (!pos.shift && localShift)) {
       await queueOffline("مفيش اتصال.");
       setBusy(false);
       return;
     }
 
     try {
-      const result = await posCheckout({
-        data: {
-          storeId: pos.storeId,
-          branchId: pos.branchId,
-          shiftId: pos.shift.id,
-          customerId: customer?.id ?? null,
-          discountAmount: discount,
-          taxAmount: 0,
-          lines: lines.map((line) => ({
-            variantId: line.variantId,
-            productId: line.productId,
-            productName: line.productName,
-            unitLabel: line.unitLabel,
-            sellPrice: line.sellPrice,
-            costPrice: line.costPrice ?? null,
-            qty: line.qty,
-            discountPct: line.discountPct,
-            barcode: line.barcode ?? null,
-          })),
-          unknownLines,
-          payments: payments.map((p) => ({ methodId: p.methodId, amount: p.amount })),
-        },
-      });
+      const result = await posCheckout({ data: basePayload as never });
       const full = await posGetInvoice({ data: { invoiceId: result.invoiceId } });
       setLastInvoice(full);
       clearCart();
       setPayOpen(false);
       toast.success(`تم البيع — ${result.invoiceNumber} · الباقي ${formatPrice(result.change)}`);
+      if (result.priceConflicts.length > 0) {
+        toast.warning(`في ${result.priceConflicts.length} صنف سعره اتغيّر على السيرفر — راجع الأسعار.`);
+      }
       if (isAutoPrintEnabled()) {
         window.setTimeout(() => void printInvoice(result.invoiceId), 250);
       }
@@ -388,6 +396,7 @@ export function CashierPage() {
     }
     setBusy(false);
   };
+
 
   const printInvoice = async (invoiceId: string | null) => {
     const ok = printReceipt();
@@ -403,7 +412,7 @@ export function CashierPage() {
   // اختصارات الكاشير: F2 دفع · F4 تعليق · F6 استرجاع · F8 تفريغ
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "F2" && !isEmpty && pos.shift) {
+      if (event.key === "F2" && !isEmpty && (pos.shift || offline?.localShift)) {
         event.preventDefault();
         setPayOpen(true);
       } else if (event.key === "F4" && !isEmpty) {
@@ -419,7 +428,20 @@ export function CashierPage() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [clearCart, holdCart, isEmpty, pos.shift]);
+  }, [clearCart, holdCart, isEmpty, offline?.localShift, pos.shift]);
+
+  // استبدال الرقم المحلي بالرقم الرسمي بعد ما الفاتورة ترتفع.
+  useEffect(() => {
+    if (!lastInvoice || !offline) return;
+    if (!lastInvoice.invoiceNumber.startsWith("OFF-")) return;
+    const synced = offline.syncedInvoices.find((item) => item.localNumber === lastInvoice.invoiceNumber);
+    if (synced?.officialNumber) {
+      setLastInvoice((current) =>
+        current ? { ...current, invoiceNumber: synced.officialNumber!, id: synced.officialInvoiceId ?? current.id } : current,
+      );
+      toast.info(`الفاتورة ${synced.localNumber} اترفعت برقم رسمي ${synced.officialNumber}.`);
+    }
+  }, [lastInvoice, offline]);
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
@@ -437,7 +459,7 @@ export function CashierPage() {
           </div>
         </div>
 
-        <BarcodeScanner onScan={handleScan} onSearch={handleSearch} busy={busy} disabled={!pos.shift} />
+        <BarcodeScanner onScan={handleScan} onSearch={handleSearch} busy={busy} disabled={!pos.shift && !offline?.localShift} />
 
         {pendingBarcode ? (
           <div className="rounded-lg border border-dashed border-border p-3 text-sm">

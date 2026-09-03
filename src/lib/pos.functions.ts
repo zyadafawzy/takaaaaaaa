@@ -335,7 +335,18 @@ export const posCheckout = createServerFn({ method: "POST" })
       .object({
         storeId: uuid,
         branchId: uuid.nullable().optional(),
-        shiftId: uuid,
+        shiftId: uuid.nullable().optional(),
+        /** معرّف الفاتورة المحلي (منع التكرار عند إعادة الرفع). */
+        clientInvoiceId: z.string().trim().min(6).max(80).optional(),
+        /** وردية اتفتحت أوفلاين: نسجّلها/نلاقيها على السيرفر بمعرّفها المحلي. */
+        offlineShift: z
+          .object({
+            clientShiftId: z.string().trim().min(6).max(80),
+            openedAt: z.string().datetime().optional(),
+            openingAmount: z.number().min(0).max(1_000_000).default(0),
+          })
+          .optional(),
+        isOffline: z.boolean().default(false),
         customerId: uuid.nullable().optional(),
         discountAmount: z.number().min(0).max(1_000_000).default(0),
         taxAmount: z.number().min(0).max(1_000_000).default(0),
@@ -355,14 +366,100 @@ export const posCheckout = createServerFn({ method: "POST" })
 
     if (data.lines.length === 0 && data.unknownLines.length === 0) throw new Error("CART_EMPTY");
 
+    // 1) منع التكرار: نفس المعرّف المحلي = نفس الفاتورة، نرجّع اللي اتسجلت خلاص.
+    if (data.clientInvoiceId) {
+      const { data: existing } = await context.supabase
+        .from("pos_invoices")
+        .select("id, invoice_number, total, paid_amount, change_amount")
+        .eq("store_id", data.storeId)
+        .eq("client_invoice_id", data.clientInvoiceId)
+        .maybeSingle();
+      if (existing) {
+        return {
+          invoiceId: existing.id,
+          invoiceNumber: existing.invoice_number,
+          total: Number(existing.total ?? 0),
+          paid: Number(existing.paid_amount ?? 0),
+          change: Number(existing.change_amount ?? 0),
+          duplicate: true,
+          priceConflicts: [] as Array<{ variantId: string; usedPrice: number; currentPrice: number }>,
+        };
+      }
+    }
 
-    const { data: shift } = await context.supabase
-      .from("cash_shifts")
-      .select("id, status, store_id")
-      .eq("id", data.shiftId)
-      .maybeSingle();
-    if (!shift || shift.status !== "open" || shift.store_id !== data.storeId) {
-      throw new Error("SHIFT_NOT_OPEN");
+    // 2) الوردية: أونلاين (shiftId) أو وردية أوفلاين بمعرّف محلي.
+    const resolveShiftId = async (): Promise<string> => {
+      if (data.shiftId) {
+        const { data: shift } = await context.supabase
+          .from("cash_shifts")
+          .select("id, status, store_id")
+          .eq("id", data.shiftId)
+          .maybeSingle();
+        if (shift && shift.store_id === data.storeId && shift.status === "open") return shift.id;
+        if (!data.offlineShift) throw new Error("SHIFT_NOT_OPEN");
+      }
+
+      const offlineShift = data.offlineShift;
+      if (!offlineShift) throw new Error("SHIFT_NOT_OPEN");
+
+      const findByKey = async (key: string) => {
+        const { data: row } = await context.supabase
+          .from("cash_shifts")
+          .select("id, status")
+          .eq("store_id", data.storeId)
+          .eq("client_shift_id", key)
+          .maybeSingle();
+        return row;
+      };
+
+      const existing = await findByKey(offlineShift.clientShiftId);
+      if (existing && existing.status === "open") return existing.id;
+
+      // الوردية الأصلية اتقفلت قبل الرفع: نفتح وردية «متأخرة» مرة واحدة بس ونربط بيها الفواتير المعلّقة.
+      const key = existing ? `${offlineShift.clientShiftId}-late` : offlineShift.clientShiftId;
+      const late = existing ? await findByKey(key) : null;
+      if (late && late.status === "open") return late.id;
+
+      const { data: created, error: createError } = await context.supabase
+        .from("cash_shifts")
+        .insert({
+          store_id: data.storeId,
+          branch_id: data.branchId ?? null,
+          cashier_id: context.userId,
+          opening_amount: offlineShift.openingAmount,
+          client_shift_id: key,
+          source: "offline",
+          ...(offlineShift.openedAt ? { opened_at: offlineShift.openedAt } : {}),
+        })
+        .select("id")
+        .single();
+
+      if (createError || !created) {
+        // ممكن يكون اتسجّل بالتوازي — نحاول نلاقيه تاني.
+        const again = await findByKey(key);
+        if (again && again.status === "open") return again.id;
+        throw new Error("SHIFT_OPEN_FAILED");
+      }
+      return created.id;
+    };
+
+    const shiftId = await resolveShiftId();
+
+    // 3) تعارض الأسعار: لو السعر المحلي قديم نرجّع تنبيه مع الفاتورة.
+    const priceConflicts: Array<{ variantId: string; usedPrice: number; currentPrice: number }> = [];
+    if (data.lines.length > 0) {
+      const { data: currentPrices } = await context.supabase
+        .from("product_variants")
+        .select("id, price")
+        .eq("store_id", data.storeId)
+        .in("id", data.lines.map((line) => line.variantId));
+      const priceMap = new Map((currentPrices ?? []).map((row) => [row.id, Number(row.price ?? 0)]));
+      for (const line of data.lines) {
+        const current = priceMap.get(line.variantId);
+        if (current != null && Math.abs(current - line.sellPrice) > 0.009) {
+          priceConflicts.push({ variantId: line.variantId, usedPrice: line.sellPrice, currentPrice: current });
+        }
+      }
     }
 
     const { data: numberResult, error: numberError } = await context.supabase.rpc("generate_invoice_number", {
@@ -376,18 +473,43 @@ export const posCheckout = createServerFn({ method: "POST" })
       .insert({
         store_id: data.storeId,
         branch_id: data.branchId ?? null,
-        shift_id: data.shiftId,
+        shift_id: shiftId,
         invoice_number: String(numberResult),
         customer_id: data.customerId ?? null,
         cashier_id: context.userId,
         discount_amount: data.discountAmount,
         tax_amount: data.taxAmount,
         notes: data.notes ?? null,
+        is_offline: data.isOffline,
+        ...(data.clientInvoiceId ? { client_invoice_id: data.clientInvoiceId } : {}),
       })
       .select("id, invoice_number")
       .single();
 
-    if (invoiceError || !invoice) throw new Error("INVOICE_CREATE_FAILED");
+    if (invoiceError || !invoice) {
+      // لو الفاتورة اتسجّلت من محاولة سابقة (سباق على نفس المعرّف) نرجّعها بدل ما نكرّر.
+      if (data.clientInvoiceId) {
+        const { data: existing } = await context.supabase
+          .from("pos_invoices")
+          .select("id, invoice_number, total, paid_amount, change_amount")
+          .eq("store_id", data.storeId)
+          .eq("client_invoice_id", data.clientInvoiceId)
+          .maybeSingle();
+        if (existing) {
+          return {
+            invoiceId: existing.id,
+            invoiceNumber: existing.invoice_number,
+            total: Number(existing.total ?? 0),
+            paid: Number(existing.paid_amount ?? 0),
+            change: Number(existing.change_amount ?? 0),
+            duplicate: true,
+            priceConflicts,
+          };
+        }
+      }
+      throw new Error("INVOICE_CREATE_FAILED");
+    }
+
 
     const items = data.lines.map((line) => {
       const gross = line.sellPrice * line.qty;
@@ -478,8 +600,48 @@ export const posCheckout = createServerFn({ method: "POST" })
       total: Number(result["total"] ?? 0),
       paid: Number(result["paid"] ?? 0),
       change: Number(result["change"] ?? 0),
+      duplicate: false,
+      priceConflicts,
     };
   });
+
+/** إغلاق وردية اتفتحت أوفلاين باستخدام معرّفها المحلي (بعد رجوع النت). */
+export const posCloseOfflineShift = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        storeId: uuid,
+        clientShiftId: z.string().trim().min(6).max(80),
+        closingAmount: z.number().min(0).max(10_000_000).default(0),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { requireStoreRole, ROLE_WRITE } = await import("./pos.server");
+    await requireStoreRole(context.supabase, context.userId, data.storeId, ROLE_WRITE);
+
+    const { data: rows } = await context.supabase
+      .from("cash_shifts")
+      .select("id, status, client_shift_id")
+      .eq("store_id", data.storeId)
+      .in("client_shift_id", [data.clientShiftId, `${data.clientShiftId}-late`]);
+
+    const open = (rows ?? []).filter((row) => row.status === "open");
+    if (open.length === 0) return { ok: true, closed: 0 };
+
+    let closed = 0;
+    for (const row of open) {
+      const { error } = await context.supabase.rpc("rpc_close_shift", {
+        p_shift_id: row.id,
+        p_closing_amount: closed === 0 ? data.closingAmount : 0,
+      });
+      if (!error) closed += 1;
+    }
+    return { ok: true, closed };
+  });
+
+
 
 export const posVoidInvoice = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

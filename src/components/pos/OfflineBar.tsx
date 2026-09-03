@@ -1,14 +1,36 @@
-import { CloudOff, CloudUpload, Download, Wifi, WifiOff } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { AlertTriangle, CloudOff, CloudUpload, Download, Wifi, WifiOff } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { useOffline } from "@/lib/offline/offline";
+import { SNAPSHOT_STALE_HOURS, useOffline } from "@/lib/offline/offline";
 
 /** شريط حالة الاتصال + التحميل للعمل أوفلاين + رفع الفواتير المتأخرة (شاشات الإدارة فقط). */
-export function OfflineBar() {
+export function OfflineBar({
+  pendingHref,
+  pendingParams,
+}: {
+  pendingHref?: string;
+  pendingParams?: Record<string, string>;
+}) {
   const offline = useOffline();
   if (!offline) return null;
 
-  const { isOnline, mode, chooseMode, snapshot, downloading, download, outbox, sync, syncing } = offline;
+  const {
+    isOnline,
+    mode,
+    chooseMode,
+    snapshot,
+    snapshotStale,
+    downloading,
+    download,
+    outbox,
+    ops,
+    sync,
+    syncing,
+    localShift,
+  } = offline;
+
+  const pendingCount = outbox.length + ops.length;
 
   if (mode === null) {
     return (
@@ -56,18 +78,44 @@ export function OfflineBar() {
           )}
         </span>
 
-        {outbox.length > 0 ? (
+        {snapshotStale ? (
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 px-2.5 py-1 font-bold text-amber-700 dark:text-amber-400">
+            <AlertTriangle className="size-3.5" />
+            النسخة المحلية أقدم من {SNAPSHOT_STALE_HOURS} ساعة — حدّثها
+          </span>
+        ) : null}
+
+        {localShift ? (
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 font-bold text-primary">
+            وردية محلية · {localShift.invoices} فاتورة
+          </span>
+        ) : null}
+
+        {pendingCount > 0 ? (
           <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 px-2.5 py-1 font-bold text-amber-700 dark:text-amber-400">
             <CloudUpload className="size-3.5" />
-            {outbox.length} فاتورة في انتظار الرفع
+            {outbox.length} فاتورة و{ops.length} عملية في انتظار الرفع
           </span>
         ) : null}
 
         <span className="ms-auto flex items-center gap-2">
-          <Button size="sm" variant="outline" className="h-7" onClick={() => void download()} disabled={downloading || !isOnline}>
+          {pendingHref ? (
+            <Button asChild size="sm" variant="ghost" className="h-7">
+              <Link to={pendingHref as never} params={pendingParams as never}>
+                المعلّقة
+              </Link>
+            </Button>
+          ) : null}
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7"
+            onClick={() => void download()}
+            disabled={downloading || !isOnline}
+          >
             {downloading ? "بنحمّل…" : "تحديث النسخة المحلية"}
           </Button>
-          {outbox.length > 0 ? (
+          {pendingCount > 0 ? (
             <Button size="sm" className="h-7" onClick={() => void sync()} disabled={syncing || !isOnline}>
               {syncing ? "بنرفع…" : "رفع الآن"}
             </Button>
@@ -77,3 +125,4 @@ export function OfflineBar() {
     </div>
   );
 }
+

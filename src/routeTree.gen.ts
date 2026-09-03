@@ -43,6 +43,7 @@ import { Route as PosCustomersRouteImport } from './routes/pos.customers'
 import { Route as PosDamagedRouteImport } from './routes/pos.damaged'
 import { Route as PosInventoryRouteImport } from './routes/pos.inventory'
 import { Route as PosInvoicesRouteImport } from './routes/pos.invoices'
+import { Route as PosPendingRouteImport } from './routes/pos.pending'
 import { Route as PosPurchasesRouteImport } from './routes/pos.purchases'
 import { Route as PosReportsRouteImport } from './routes/pos.reports'
 import { Route as PosSettingsRouteImport } from './routes/pos.settings'
@@ -83,6 +84,7 @@ import { Route as SStoreSlugAdminPosCustomersRouteImport } from './routes/s.$sto
 import { Route as SStoreSlugAdminPosDamagedRouteImport } from './routes/s.$storeSlug.admin.pos.damaged'
 import { Route as SStoreSlugAdminPosInventoryRouteImport } from './routes/s.$storeSlug.admin.pos.inventory'
 import { Route as SStoreSlugAdminPosInvoicesRouteImport } from './routes/s.$storeSlug.admin.pos.invoices'
+import { Route as SStoreSlugAdminPosPendingRouteImport } from './routes/s.$storeSlug.admin.pos.pending'
 import { Route as SStoreSlugAdminPosPurchasesRouteImport } from './routes/s.$storeSlug.admin.pos.purchases'
 import { Route as SStoreSlugAdminPosReportsRouteImport } from './routes/s.$storeSlug.admin.pos.reports'
 import { Route as SStoreSlugAdminPosSettingsRouteImport } from './routes/s.$storeSlug.admin.pos.settings'
@@ -257,6 +259,11 @@ const PosInventoryRoute = PosInventoryRouteImport.update({
 const PosInvoicesRoute = PosInvoicesRouteImport.update({
   id: '/invoices',
   path: '/invoices',
+  getParentRoute: () => PosRoute,
+} as any)
+const PosPendingRoute = PosPendingRouteImport.update({
+  id: '/pending',
+  path: '/pending',
   getParentRoute: () => PosRoute,
 } as any)
 const PosPurchasesRoute = PosPurchasesRouteImport.update({
@@ -465,6 +472,12 @@ const SStoreSlugAdminPosInvoicesRoute =
     path: '/invoices',
     getParentRoute: () => SStoreSlugAdminPosRoute,
   } as any)
+const SStoreSlugAdminPosPendingRoute =
+  SStoreSlugAdminPosPendingRouteImport.update({
+    id: '/pending',
+    path: '/pending',
+    getParentRoute: () => SStoreSlugAdminPosRoute,
+  } as any)
 const SStoreSlugAdminPosPurchasesRoute =
   SStoreSlugAdminPosPurchasesRouteImport.update({
     id: '/purchases',
@@ -528,6 +541,7 @@ export interface FileRoutesByFullPath {
   '/pos/damaged': typeof PosDamagedRoute
   '/pos/inventory': typeof PosInventoryRoute
   '/pos/invoices': typeof PosInvoicesRoute
+  '/pos/pending': typeof PosPendingRoute
   '/pos/purchases': typeof PosPurchasesRoute
   '/pos/reports': typeof PosReportsRoute
   '/pos/settings': typeof PosSettingsRoute
@@ -570,6 +584,7 @@ export interface FileRoutesByFullPath {
   '/s/$storeSlug/admin/pos/damaged': typeof SStoreSlugAdminPosDamagedRoute
   '/s/$storeSlug/admin/pos/inventory': typeof SStoreSlugAdminPosInventoryRoute
   '/s/$storeSlug/admin/pos/invoices': typeof SStoreSlugAdminPosInvoicesRoute
+  '/s/$storeSlug/admin/pos/pending': typeof SStoreSlugAdminPosPendingRoute
   '/s/$storeSlug/admin/pos/purchases': typeof SStoreSlugAdminPosPurchasesRoute
   '/s/$storeSlug/admin/pos/reports': typeof SStoreSlugAdminPosReportsRoute
   '/s/$storeSlug/admin/pos/settings': typeof SStoreSlugAdminPosSettingsRoute
@@ -606,6 +621,7 @@ export interface FileRoutesByTo {
   '/pos/damaged': typeof PosDamagedRoute
   '/pos/inventory': typeof PosInventoryRoute
   '/pos/invoices': typeof PosInvoicesRoute
+  '/pos/pending': typeof PosPendingRoute
   '/pos/purchases': typeof PosPurchasesRoute
   '/pos/reports': typeof PosReportsRoute
   '/pos/settings': typeof PosSettingsRoute
@@ -645,6 +661,7 @@ export interface FileRoutesByTo {
   '/s/$storeSlug/admin/pos/damaged': typeof SStoreSlugAdminPosDamagedRoute
   '/s/$storeSlug/admin/pos/inventory': typeof SStoreSlugAdminPosInventoryRoute
   '/s/$storeSlug/admin/pos/invoices': typeof SStoreSlugAdminPosInvoicesRoute
+  '/s/$storeSlug/admin/pos/pending': typeof SStoreSlugAdminPosPendingRoute
   '/s/$storeSlug/admin/pos/purchases': typeof SStoreSlugAdminPosPurchasesRoute
   '/s/$storeSlug/admin/pos/reports': typeof SStoreSlugAdminPosReportsRoute
   '/s/$storeSlug/admin/pos/settings': typeof SStoreSlugAdminPosSettingsRoute
@@ -685,6 +702,7 @@ export interface FileRoutesById {
   '/pos/damaged': typeof PosDamagedRoute
   '/pos/inventory': typeof PosInventoryRoute
   '/pos/invoices': typeof PosInvoicesRoute
+  '/pos/pending': typeof PosPendingRoute
   '/pos/purchases': typeof PosPurchasesRoute
   '/pos/reports': typeof PosReportsRoute
   '/pos/settings': typeof PosSettingsRoute
@@ -727,6 +745,7 @@ export interface FileRoutesById {
   '/s/$storeSlug/admin/pos/damaged': typeof SStoreSlugAdminPosDamagedRoute
   '/s/$storeSlug/admin/pos/inventory': typeof SStoreSlugAdminPosInventoryRoute
   '/s/$storeSlug/admin/pos/invoices': typeof SStoreSlugAdminPosInvoicesRoute
+  '/s/$storeSlug/admin/pos/pending': typeof SStoreSlugAdminPosPendingRoute
   '/s/$storeSlug/admin/pos/purchases': typeof SStoreSlugAdminPosPurchasesRoute
   '/s/$storeSlug/admin/pos/reports': typeof SStoreSlugAdminPosReportsRoute
   '/s/$storeSlug/admin/pos/settings': typeof SStoreSlugAdminPosSettingsRoute
@@ -768,6 +787,7 @@ export interface FileRouteTypes {
     | '/pos/damaged'
     | '/pos/inventory'
     | '/pos/invoices'
+    | '/pos/pending'
     | '/pos/purchases'
     | '/pos/reports'
     | '/pos/settings'
@@ -810,6 +830,7 @@ export interface FileRouteTypes {
     | '/s/$storeSlug/admin/pos/damaged'
     | '/s/$storeSlug/admin/pos/inventory'
     | '/s/$storeSlug/admin/pos/invoices'
+    | '/s/$storeSlug/admin/pos/pending'
     | '/s/$storeSlug/admin/pos/purchases'
     | '/s/$storeSlug/admin/pos/reports'
     | '/s/$storeSlug/admin/pos/settings'
@@ -846,6 +867,7 @@ export interface FileRouteTypes {
     | '/pos/damaged'
     | '/pos/inventory'
     | '/pos/invoices'
+    | '/pos/pending'
     | '/pos/purchases'
     | '/pos/reports'
     | '/pos/settings'
@@ -885,6 +907,7 @@ export interface FileRouteTypes {
     | '/s/$storeSlug/admin/pos/damaged'
     | '/s/$storeSlug/admin/pos/inventory'
     | '/s/$storeSlug/admin/pos/invoices'
+    | '/s/$storeSlug/admin/pos/pending'
     | '/s/$storeSlug/admin/pos/purchases'
     | '/s/$storeSlug/admin/pos/reports'
     | '/s/$storeSlug/admin/pos/settings'
@@ -924,6 +947,7 @@ export interface FileRouteTypes {
     | '/pos/damaged'
     | '/pos/inventory'
     | '/pos/invoices'
+    | '/pos/pending'
     | '/pos/purchases'
     | '/pos/reports'
     | '/pos/settings'
@@ -966,6 +990,7 @@ export interface FileRouteTypes {
     | '/s/$storeSlug/admin/pos/damaged'
     | '/s/$storeSlug/admin/pos/inventory'
     | '/s/$storeSlug/admin/pos/invoices'
+    | '/s/$storeSlug/admin/pos/pending'
     | '/s/$storeSlug/admin/pos/purchases'
     | '/s/$storeSlug/admin/pos/reports'
     | '/s/$storeSlug/admin/pos/settings'
@@ -1237,6 +1262,13 @@ declare module '@tanstack/react-router' {
       path: '/invoices'
       fullPath: '/pos/invoices'
       preLoaderRoute: typeof PosInvoicesRouteImport
+      parentRoute: typeof PosRoute
+    }
+    '/pos/pending': {
+      id: '/pos/pending'
+      path: '/pending'
+      fullPath: '/pos/pending'
+      preLoaderRoute: typeof PosPendingRouteImport
       parentRoute: typeof PosRoute
     }
     '/pos/purchases': {
@@ -1519,6 +1551,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SStoreSlugAdminPosInvoicesRouteImport
       parentRoute: typeof SStoreSlugAdminPosRoute
     }
+    '/s/$storeSlug/admin/pos/pending': {
+      id: '/s/$storeSlug/admin/pos/pending'
+      path: '/pending'
+      fullPath: '/s/$storeSlug/admin/pos/pending'
+      preLoaderRoute: typeof SStoreSlugAdminPosPendingRouteImport
+      parentRoute: typeof SStoreSlugAdminPosRoute
+    }
     '/s/$storeSlug/admin/pos/purchases': {
       id: '/s/$storeSlug/admin/pos/purchases'
       path: '/purchases'
@@ -1634,6 +1673,7 @@ interface PosRouteChildren {
   PosDamagedRoute: typeof PosDamagedRoute
   PosInventoryRoute: typeof PosInventoryRoute
   PosInvoicesRoute: typeof PosInvoicesRoute
+  PosPendingRoute: typeof PosPendingRoute
   PosPurchasesRoute: typeof PosPurchasesRoute
   PosReportsRoute: typeof PosReportsRoute
   PosSettingsRoute: typeof PosSettingsRoute
@@ -1647,6 +1687,7 @@ const PosRouteChildren: PosRouteChildren = {
   PosDamagedRoute: PosDamagedRoute,
   PosInventoryRoute: PosInventoryRoute,
   PosInvoicesRoute: PosInvoicesRoute,
+  PosPendingRoute: PosPendingRoute,
   PosPurchasesRoute: PosPurchasesRoute,
   PosReportsRoute: PosReportsRoute,
   PosSettingsRoute: PosSettingsRoute,
@@ -1662,6 +1703,7 @@ interface SStoreSlugAdminPosRouteChildren {
   SStoreSlugAdminPosDamagedRoute: typeof SStoreSlugAdminPosDamagedRoute
   SStoreSlugAdminPosInventoryRoute: typeof SStoreSlugAdminPosInventoryRoute
   SStoreSlugAdminPosInvoicesRoute: typeof SStoreSlugAdminPosInvoicesRoute
+  SStoreSlugAdminPosPendingRoute: typeof SStoreSlugAdminPosPendingRoute
   SStoreSlugAdminPosPurchasesRoute: typeof SStoreSlugAdminPosPurchasesRoute
   SStoreSlugAdminPosReportsRoute: typeof SStoreSlugAdminPosReportsRoute
   SStoreSlugAdminPosSettingsRoute: typeof SStoreSlugAdminPosSettingsRoute
@@ -1675,6 +1717,7 @@ const SStoreSlugAdminPosRouteChildren: SStoreSlugAdminPosRouteChildren = {
   SStoreSlugAdminPosDamagedRoute: SStoreSlugAdminPosDamagedRoute,
   SStoreSlugAdminPosInventoryRoute: SStoreSlugAdminPosInventoryRoute,
   SStoreSlugAdminPosInvoicesRoute: SStoreSlugAdminPosInvoicesRoute,
+  SStoreSlugAdminPosPendingRoute: SStoreSlugAdminPosPendingRoute,
   SStoreSlugAdminPosPurchasesRoute: SStoreSlugAdminPosPurchasesRoute,
   SStoreSlugAdminPosReportsRoute: SStoreSlugAdminPosReportsRoute,
   SStoreSlugAdminPosSettingsRoute: SStoreSlugAdminPosSettingsRoute,
