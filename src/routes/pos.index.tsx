@@ -11,6 +11,7 @@ import { InvoicePrint } from "@/components/pos/InvoicePrint";
 import { PaymentModal, type PaymentSplit } from "@/components/pos/PaymentModal";
 import { UnknownBarcodeDialog } from "@/components/pos/UnknownBarcodeDialog";
 import { usePos } from "@/components/pos/PosShell";
+import { useOffline } from "@/lib/offline/offline";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -57,6 +58,7 @@ export const Route = createFileRoute("/pos/")({
 
 export function CashierPage() {
   const pos = usePos();
+  const offline = useOffline();
   const [lines, setLines] = useState<PosCartLine[]>([]);
   const [unknownLines, setUnknownLines] = useState<PosUnknownLine[]>([]);
   const [results, setResults] = useState<Omit<PosCartLine, "qty" | "discountPct" | "barcode">[]>([]);
@@ -106,8 +108,32 @@ export function CashierPage() {
     setResults([]);
   };
 
+  const localScan = (barcode: string) => {
+    const variant = offline?.snapshot?.variants.find((item) => item.barcodes.includes(barcode));
+    if (!variant) return null;
+    return {
+      variantId: variant.variantId,
+      productId: variant.productId,
+      productName: variant.productName,
+      unitLabel: variant.unitLabel,
+      sellPrice: variant.sellPrice,
+      costPrice: variant.costPrice,
+      stock: variant.stock,
+    };
+  };
+
   const handleScan = async (barcode: string) => {
     setBusy(true);
+    if (offline && !offline.isOnline) {
+      const local = localScan(barcode);
+      if (local) addLine({ ...local, barcode });
+      else {
+        setPendingBarcode(barcode);
+        setUnknownBarcode(barcode);
+      }
+      setBusy(false);
+      return;
+    }
     try {
       const hit = await posScanBarcode({ data: { storeId: pos.storeId, branchId: pos.branchId, barcode } });
       if (!hit.found) {
@@ -117,19 +143,50 @@ export function CashierPage() {
         addLine(hit);
       }
     } catch {
-      toast.error("مقدرناش نقرأ الباركود.");
+      const local = localScan(barcode);
+      if (local) {
+        addLine({ ...local, barcode });
+        toast.info("اتقرأ من النسخة المحلية (النت مقطوع).");
+      } else {
+        toast.error("مقدرناش نقرأ الباركود.");
+      }
     }
     setBusy(false);
   };
 
+  const localSearch = (query: string) => {
+    const needle = query.trim();
+    return (offline?.snapshot?.variants ?? [])
+      .filter((item) => item.productName.includes(needle))
+      .slice(0, 20)
+      .map((item) => ({
+        variantId: item.variantId,
+        productId: item.productId,
+        productName: item.productName,
+        unitLabel: item.unitLabel,
+        sellPrice: item.sellPrice,
+        costPrice: item.costPrice,
+        stock: item.stock,
+      }));
+  };
+
   const handleSearch = async (query: string) => {
     setBusy(true);
+    if (offline && !offline.isOnline) {
+      const found = localSearch(query);
+      setResults(found);
+      if (found.length === 0) toast.info("مفيش نتائج في النسخة المحلية.");
+      setBusy(false);
+      return;
+    }
     try {
       const found = await posSearchVariants({ data: { storeId: pos.storeId, branchId: pos.branchId, query } });
       setResults(found);
       if (found.length === 0) toast.info("مفيش نتائج بالاسم ده.");
     } catch {
-      toast.error("البحث فشل.");
+      const found = localSearch(query);
+      setResults(found);
+      if (found.length === 0) toast.error("البحث فشل.");
     }
     setBusy(false);
   };
