@@ -600,8 +600,48 @@ export const posCheckout = createServerFn({ method: "POST" })
       total: Number(result["total"] ?? 0),
       paid: Number(result["paid"] ?? 0),
       change: Number(result["change"] ?? 0),
+      duplicate: false,
+      priceConflicts,
     };
   });
+
+/** إغلاق وردية اتفتحت أوفلاين باستخدام معرّفها المحلي (بعد رجوع النت). */
+export const posCloseOfflineShift = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        storeId: uuid,
+        clientShiftId: z.string().trim().min(6).max(80),
+        closingAmount: z.number().min(0).max(10_000_000).default(0),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { requireStoreRole, ROLE_WRITE } = await import("./pos.server");
+    await requireStoreRole(context.supabase, context.userId, data.storeId, ROLE_WRITE);
+
+    const { data: rows } = await context.supabase
+      .from("cash_shifts")
+      .select("id, status, client_shift_id")
+      .eq("store_id", data.storeId)
+      .in("client_shift_id", [data.clientShiftId, `${data.clientShiftId}-late`]);
+
+    const open = (rows ?? []).filter((row) => row.status === "open");
+    if (open.length === 0) return { ok: true, closed: 0 };
+
+    let closed = 0;
+    for (const row of open) {
+      const { error } = await context.supabase.rpc("rpc_close_shift", {
+        p_shift_id: row.id,
+        p_closing_amount: closed === 0 ? data.closingAmount : 0,
+      });
+      if (!error) closed += 1;
+    }
+    return { ok: true, closed };
+  });
+
+
 
 export const posVoidInvoice = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
