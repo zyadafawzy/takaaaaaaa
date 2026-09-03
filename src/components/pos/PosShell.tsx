@@ -19,6 +19,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { posBootstrap, posCloseShift, posOpenShift, posSetupStore } from "@/lib/pos.functions";
 import { formatPrice } from "@/lib/format";
 import { POS_ROLE_LABELS, type PosBootstrapContext } from "@/components/pos/pos-context";
+import { OfflineProvider } from "@/lib/offline/offline";
+import { OfflineBar } from "@/components/pos/OfflineBar";
 
 const PosContext = createContext<PosBootstrapContext | null>(null);
 
@@ -167,6 +169,7 @@ export function PosShell({
 
   return (
     <PosContext.Provider value={value}>
+     <OfflineProvider storeId={value.storeId} branchId={value.branchId}>
       <div className={embedded ? "bg-background" : "min-h-screen bg-background"}>
         <header className="border-b border-border bg-card">
           <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-3 px-4 py-3">
@@ -231,12 +234,15 @@ export function PosShell({
           </nav>
         </header>
 
+        <OfflineBar />
+
         {value.branches.length === 0 ? <PosSetupBanner storeId={value.storeId} onDone={value.refresh} /> : null}
 
         <ShiftBar busy={busy} setBusy={setBusy} />
 
         <main className="mx-auto max-w-7xl px-4 py-6">{children}</main>
       </div>
+     </OfflineProvider>
     </PosContext.Provider>
   );
 }
