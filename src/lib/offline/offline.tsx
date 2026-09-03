@@ -114,6 +114,28 @@ export function OfflineProvider({
     [download, storeId],
   );
 
+  /** خصم الكميات محليًا بعد بيع أوفلاين عشان مانبيعش أكتر من المتاح. */
+  const applyLocalStock = useCallback(
+    async (payload: unknown) => {
+      const lines = (payload as { lines?: Array<{ variantId?: string | null; qty?: number }> } | null)?.lines;
+      if (!Array.isArray(lines) || lines.length === 0) return;
+      const current = await idbGet<OfflineSnapshotData>(snapKey(storeId));
+      if (!current) return;
+      const next: OfflineSnapshotData = {
+        ...current,
+        variants: current.variants.map((variant) => {
+          const sold = lines
+            .filter((line) => line.variantId === variant.variantId)
+            .reduce((sum, line) => sum + Number(line.qty ?? 0), 0);
+          return sold > 0 ? { ...variant, stock: variant.stock - sold } : variant;
+        }),
+      };
+      await idbSet(snapKey(storeId), next);
+      setSnapshot(next);
+    },
+    [storeId],
+  );
+
   const queueInvoice = useCallback(
     async (item: Omit<OutboxInvoice, "id" | "createdAt">) => {
       const entry: OutboxInvoice = {
@@ -123,14 +145,18 @@ export function OfflineProvider({
       };
       const current = (await idbGet<OutboxInvoice[]>(OUTBOX_KEY)) ?? [];
       await persistOutbox([...current, entry]);
+      await applyLocalStock(entry.payload);
     },
-    [persistOutbox],
+    [applyLocalStock, persistOutbox],
   );
 
   const sync = useCallback(
     async (silent = false) => {
       if (syncingRef.current) return;
-      const pending = (await idbGet<OutboxInvoice[]>(OUTBOX_KEY)) ?? [];
+      if (!window.navigator.onLine) return;
+      const all = (await idbGet<OutboxInvoice[]>(OUTBOX_KEY)) ?? [];
+      const pending = all.filter((item) => item.storeId === storeId);
+      const others = all.filter((item) => item.storeId !== storeId);
       if (pending.length === 0) {
         if (!silent) toast.info("مفيش فواتير متأخرة للرفع.");
         return;
@@ -139,21 +165,25 @@ export function OfflineProvider({
       setSyncing(true);
       const rest: OutboxInvoice[] = [];
       let sent = 0;
+      let failed = 0;
       for (const item of pending) {
         try {
           await posCheckout({ data: item.payload as never });
           sent += 1;
         } catch (error) {
+          failed += 1;
           rest.push({ ...item, lastError: error instanceof Error ? error.message : "SYNC_FAILED" });
         }
       }
-      await persistOutbox(rest);
+      const merged = [...others, ...rest];
+      setOutbox(rest);
+      await idbSet(OUTBOX_KEY, merged);
       syncingRef.current = false;
       setSyncing(false);
       if (sent > 0) toast.success(`اترفع ${sent} فاتورة على السيرفر.`);
-      else if (!silent) toast.error("الرفع فشل — هنجرب تاني لما النت يستقر.");
+      if (failed > 0 && !silent) toast.error("بعض الفواتير فشل رفعها — هنجرب تاني لما النت يستقر.");
     },
-    [persistOutbox],
+    [storeId],
   );
 
   useEffect(() => {
@@ -165,6 +195,13 @@ export function OfflineProvider({
       window.clearInterval(interval);
     };
   }, [isOnline, outbox.length, sync]);
+
+  // تحديث تلقائي للنسخة المحلية كل ربع ساعة في وضع الأوفلاين.
+  useEffect(() => {
+    if (mode !== "offline" || !isOnline) return;
+    const interval = window.setInterval(() => void download(), 15 * 60 * 1000);
+    return () => window.clearInterval(interval);
+  }, [download, isOnline, mode]);
 
   const value = useMemo<OfflineValue>(
     () => ({
