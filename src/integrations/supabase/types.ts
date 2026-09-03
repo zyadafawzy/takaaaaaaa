@@ -370,6 +370,7 @@ export type Database = {
         Row: {
           branch_id: string | null
           cashier_id: string
+          client_shift_id: string | null
           closed_at: string | null
           closing_amount: number | null
           created_at: string
@@ -379,12 +380,14 @@ export type Database = {
           notes: string | null
           opened_at: string
           opening_amount: number
+          source: string
           status: string
           store_id: string
         }
         Insert: {
           branch_id?: string | null
           cashier_id: string
+          client_shift_id?: string | null
           closed_at?: string | null
           closing_amount?: number | null
           created_at?: string
@@ -394,12 +397,14 @@ export type Database = {
           notes?: string | null
           opened_at?: string
           opening_amount?: number
+          source?: string
           status?: string
           store_id: string
         }
         Update: {
           branch_id?: string | null
           cashier_id?: string
+          client_shift_id?: string | null
           closed_at?: string | null
           closing_amount?: number | null
           created_at?: string
@@ -409,6 +414,7 @@ export type Database = {
           notes?: string | null
           opened_at?: string
           opening_amount?: number
+          source?: string
           status?: string
           store_id?: string
         }
@@ -1973,6 +1979,7 @@ export type Database = {
           branch_id: string | null
           cashier_id: string
           change_amount: number
+          client_invoice_id: string | null
           confirmed_at: string | null
           confirmed_by: string | null
           created_at: string
@@ -1983,6 +1990,7 @@ export type Database = {
           discount_pct: number
           id: string
           invoice_number: string
+          is_offline: boolean
           loyalty_points_earned: number
           loyalty_points_redeemed: number
           notes: string | null
@@ -2003,6 +2011,7 @@ export type Database = {
           branch_id?: string | null
           cashier_id: string
           change_amount?: number
+          client_invoice_id?: string | null
           confirmed_at?: string | null
           confirmed_by?: string | null
           created_at?: string
@@ -2013,6 +2022,7 @@ export type Database = {
           discount_pct?: number
           id?: string
           invoice_number: string
+          is_offline?: boolean
           loyalty_points_earned?: number
           loyalty_points_redeemed?: number
           notes?: string | null
@@ -2033,6 +2043,7 @@ export type Database = {
           branch_id?: string | null
           cashier_id?: string
           change_amount?: number
+          client_invoice_id?: string | null
           confirmed_at?: string | null
           confirmed_by?: string | null
           created_at?: string
@@ -2043,6 +2054,7 @@ export type Database = {
           discount_pct?: number
           id?: string
           invoice_number?: string
+          is_offline?: boolean
           loyalty_points_earned?: number
           loyalty_points_redeemed?: number
           notes?: string | null
