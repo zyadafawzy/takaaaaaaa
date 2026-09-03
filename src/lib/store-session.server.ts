@@ -86,6 +86,7 @@ export async function provisionStoreMemberAccount(
     const saved = await supabaseAdmin.from("store_users").insert({
       store_id: storeId,
       user_id: userId,
+      username: normalizeStoreUsername(input.username),
       email,
       full_name: input.fullName,
       role: role.store,
