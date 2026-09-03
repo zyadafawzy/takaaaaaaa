@@ -300,31 +300,52 @@ export function CashierPage() {
   };
 
   const checkout = async (payments: PaymentSplit[]) => {
-    if (!pos.shift) {
+    const localShift = offline?.localShift ?? null;
+    if (!pos.shift && !localShift) {
       toast.error("افتح وردية الأول.");
       return;
     }
     setBusy(true);
-    const payload = {
-          storeId: pos.storeId,
-          branchId: pos.branchId,
-          shiftId: pos.shift.id,
-          customerId: customer?.id ?? null,
-          discountAmount: discount,
-          taxAmount: 0,
-          lines: lines.map((line) => ({
-            variantId: line.variantId,
-            productId: line.productId,
-            productName: line.productName,
-            unitLabel: line.unitLabel,
-            sellPrice: line.sellPrice,
-            costPrice: line.costPrice ?? null,
-            qty: line.qty,
-            discountPct: line.discountPct,
-            barcode: line.barcode ?? null,
-          })),
-          unknownLines,
-          payments: payments.map((p) => ({ methodId: p.methodId, amount: p.amount })),
+
+    const clientInvoiceId = `${pos.storeId.slice(0, 8)}-${Date.now().toString(36)}-${Math.random()
+      .toString(36)
+      .slice(2, 8)}`;
+
+    const basePayload = {
+      storeId: pos.storeId,
+      branchId: pos.branchId,
+      shiftId: pos.shift?.id ?? null,
+      clientInvoiceId,
+      customerId: customer?.id ?? null,
+      discountAmount: discount,
+      taxAmount: 0,
+      lines: lines.map((line) => ({
+        variantId: line.variantId,
+        productId: line.productId,
+        productName: line.productName,
+        unitLabel: line.unitLabel,
+        sellPrice: line.sellPrice,
+        costPrice: line.costPrice ?? null,
+        qty: line.qty,
+        discountPct: line.discountPct,
+        barcode: line.barcode ?? null,
+      })),
+      unknownLines,
+      payments: payments.map((p) => ({ methodId: p.methodId, amount: p.amount })),
+    };
+
+    const offlinePayload = {
+      ...basePayload,
+      isOffline: true,
+      ...(localShift
+        ? {
+            offlineShift: {
+              clientShiftId: localShift.clientShiftId,
+              openedAt: localShift.openedAt,
+              openingAmount: localShift.openingAmount,
+            },
+          }
+        : {}),
     };
 
     const queueOffline = async (reason: string) => {
@@ -333,7 +354,13 @@ export function CashierPage() {
         return;
       }
       const localNumber = `OFF-${Date.now().toString(36).toUpperCase()}`;
-      await offline.queueInvoice({ storeId: pos.storeId, localNumber, total, payload: payload as never });
+      await offline.queueInvoice({
+        storeId: pos.storeId,
+        localNumber,
+        clientInvoiceId,
+        total,
+        payload: offlinePayload as unknown as Record<string, unknown>,
+      });
       const localInvoice = buildLocalInvoice(payments, localNumber);
       setLastInvoice(localInvoice);
       clearCart();
@@ -342,41 +369,22 @@ export function CashierPage() {
       if (isAutoPrintEnabled()) window.setTimeout(() => void printInvoice(null), 250);
     };
 
-    if (offline && !offline.isOnline) {
+    if ((offline && !offline.isOnline) || (!pos.shift && localShift)) {
       await queueOffline("مفيش اتصال.");
       setBusy(false);
       return;
     }
 
     try {
-      const result = await posCheckout({
-        data: {
-          storeId: pos.storeId,
-          branchId: pos.branchId,
-          shiftId: pos.shift.id,
-          customerId: customer?.id ?? null,
-          discountAmount: discount,
-          taxAmount: 0,
-          lines: lines.map((line) => ({
-            variantId: line.variantId,
-            productId: line.productId,
-            productName: line.productName,
-            unitLabel: line.unitLabel,
-            sellPrice: line.sellPrice,
-            costPrice: line.costPrice ?? null,
-            qty: line.qty,
-            discountPct: line.discountPct,
-            barcode: line.barcode ?? null,
-          })),
-          unknownLines,
-          payments: payments.map((p) => ({ methodId: p.methodId, amount: p.amount })),
-        },
-      });
+      const result = await posCheckout({ data: basePayload as never });
       const full = await posGetInvoice({ data: { invoiceId: result.invoiceId } });
       setLastInvoice(full);
       clearCart();
       setPayOpen(false);
       toast.success(`تم البيع — ${result.invoiceNumber} · الباقي ${formatPrice(result.change)}`);
+      if (result.priceConflicts.length > 0) {
+        toast.warning(`في ${result.priceConflicts.length} صنف سعره اتغيّر على السيرفر — راجع الأسعار.`);
+      }
       if (isAutoPrintEnabled()) {
         window.setTimeout(() => void printInvoice(result.invoiceId), 250);
       }
@@ -388,6 +396,7 @@ export function CashierPage() {
     }
     setBusy(false);
   };
+
 
   const printInvoice = async (invoiceId: string | null) => {
     const ok = printReceipt();
