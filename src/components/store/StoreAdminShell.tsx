@@ -18,6 +18,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ConnectionChip } from "@/components/store/ConnectionChip";
 
 type Tab = { to: string; label: string; icon: typeof LayoutDashboard; primary?: boolean };
 
@@ -231,6 +232,7 @@ export function StoreAdminShell({
             <p className="truncate text-[11px] text-muted-foreground">{email ?? "إدارة المتجر"}</p>
           </div>
           <div className="ms-auto flex items-center gap-2">
+            <ConnectionChip />
             <Button variant="outline" size="sm" className="rounded-full" asChild>
               <Link to="/s/$storeSlug" params={{ storeSlug }}>
                 عرض المتجر
