@@ -21,6 +21,7 @@ import { formatPrice } from "@/lib/format";
 import { POS_ROLE_LABELS, type PosBootstrapContext } from "@/components/pos/pos-context";
 import { OfflineProvider } from "@/lib/offline/offline";
 import { OfflineBar } from "@/components/pos/OfflineBar";
+import { useOffline } from "@/lib/offline/offline";
 
 const PosContext = createContext<PosBootstrapContext | null>(null);
 
@@ -39,6 +40,7 @@ const NAV_ITEMS = [
   { suffix: "/inventory", label: "المخزون", exact: false },
   { suffix: "/unknown", label: "أصناف مجهولة", exact: false },
   { suffix: "/damaged", label: "هوالك وتالف", exact: false },
+  { suffix: "/pending", label: "المعلّقة", exact: false },
   { suffix: "/reports", label: "التقارير", exact: false },
   { suffix: "/settings", label: "الإعدادات", exact: false },
 ] as const;
@@ -244,7 +246,10 @@ export function PosShell({
           </nav>
         </header>
 
-        <OfflineBar />
+        <OfflineBar
+          pendingHref={`${basePath}/pending`}
+          {...(linkParams ? { pendingParams: linkParams } : {})}
+        />
 
         {value.branches.length === 0 ? <PosSetupBanner storeId={value.storeId} onDone={value.refresh} /> : null}
 
@@ -314,8 +319,55 @@ function PosSetupBanner({ storeId, onDone }: { storeId: string; onDone: () => vo
 
 function ShiftBar({ busy, setBusy }: { busy: boolean; setBusy: (value: boolean) => void }) {
   const pos = usePos();
+  const offline = useOffline();
   const [opening, setOpening] = useState("0");
   const [closing, setClosing] = useState("0");
+  const canOffline = Boolean(offline && !offline.isOnline);
+  const localShift = offline?.localShift ?? null;
+
+  // وردية محلية: فتحناها من غير نت، وهترتبط بالسيرفر أول ما الفواتير ترتفع.
+  if (!pos.shift && localShift) {
+    return (
+      <div className="border-b border-border bg-card px-4 py-3">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-end gap-3">
+          <p className="flex-1 text-sm">
+            وردية محلية مفتوحة من{" "}
+            {new Intl.DateTimeFormat("ar-EG", { timeZone: "Africa/Cairo", timeStyle: "short" }).format(
+              new Date(localShift.openedAt),
+            )}{" "}
+            · رصيد البداية {formatPrice(localShift.openingAmount)} · {localShift.invoices} فاتورة
+          </p>
+          <div className="space-y-1">
+            <Label htmlFor="pos-local-closing">النقدية في الدرج</Label>
+            <Input
+              id="pos-local-closing"
+              value={closing}
+              inputMode="decimal"
+              className="h-9 w-32"
+              onChange={(event) => setClosing(event.target.value)}
+            />
+          </div>
+          <Button
+            variant="outline"
+            disabled={busy}
+            onClick={async () => {
+              setBusy(true);
+              try {
+                await offline!.closeLocalShift(Number(closing) || 0);
+                toast.success("الوردية المحلية اتقفلت — هتتسجل على السيرفر بعد الرفع.");
+                pos.refresh();
+              } catch {
+                toast.error("مقدرناش نقفل الوردية المحلية.");
+              }
+              setBusy(false);
+            }}
+          >
+            اقفل الوردية المحلية
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (!pos.shift) {
     return (
@@ -353,6 +405,24 @@ function ShiftBar({ busy, setBusy }: { busy: boolean; setBusy: (value: boolean) 
           >
             افتح وردية
           </Button>
+          {canOffline ? (
+            <Button
+              variant="outline"
+              disabled={busy}
+              onClick={async () => {
+                setBusy(true);
+                try {
+                  await offline!.openLocalShift(Number(opening) || 0);
+                  toast.success("وردية محلية اتفتحت — البيع شغال من غير نت.");
+                } catch {
+                  toast.error("مقدرناش نفتح وردية محلية.");
+                }
+                setBusy(false);
+              }}
+            >
+              افتح وردية أوفلاين
+            </Button>
+          ) : null}
           <p className="text-sm text-muted-foreground">لازم تفتح وردية قبل أي فاتورة.</p>
         </div>
       </div>
