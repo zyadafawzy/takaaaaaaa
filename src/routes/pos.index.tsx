@@ -253,12 +253,101 @@ export function CashierPage() {
     setBusy(false);
   };
 
+  const buildLocalInvoice = (payments: PaymentSplit[], localNumber: string): PosInvoiceFull => {
+    const paid = payments.reduce((sum, p) => sum + p.amount, 0);
+    return {
+      id: localNumber,
+      invoiceNumber: localNumber,
+      total,
+      paidAmount: paid,
+      status: "confirmed",
+      createdAt: new Date().toISOString(),
+      customerName: customer?.name ?? null,
+      itemsCount: lines.length + unknownLines.length,
+      storeId: pos.storeId,
+      branchName: pos.branches.find((b) => b.id === pos.branchId)?.name ?? null,
+      subtotal,
+      discountAmount: discount,
+      taxAmount: 0,
+      changeAmount: Math.max(0, Math.round((paid - total) * 100) / 100),
+      voidReason: null,
+      items: [
+        ...lines.map((line, index) => ({
+          id: `l${index}`,
+          productName: line.productName,
+          unitLabel: line.unitLabel,
+          sellPrice: line.sellPrice,
+          qty: line.qty,
+          discountPct: line.discountPct,
+          lineTotal: lineTotal(line),
+        })),
+        ...unknownLines.map((line, index) => ({
+          id: `u${index}`,
+          productName: line.name,
+          unitLabel: line.unitLabel,
+          sellPrice: line.sellPrice,
+          qty: line.qty,
+          discountPct: 0,
+          lineTotal: unknownLineTotal(line),
+        })),
+      ],
+      payments: payments.map((p, index) => ({
+        id: `p${index}`,
+        methodName: pos.paymentMethods.find((m) => m.id === p.methodId)?.name ?? "دفع",
+        amount: p.amount,
+      })),
+    };
+  };
+
   const checkout = async (payments: PaymentSplit[]) => {
     if (!pos.shift) {
       toast.error("افتح وردية الأول.");
       return;
     }
     setBusy(true);
+    const payload = {
+          storeId: pos.storeId,
+          branchId: pos.branchId,
+          shiftId: pos.shift.id,
+          customerId: customer?.id ?? null,
+          discountAmount: discount,
+          taxAmount: 0,
+          lines: lines.map((line) => ({
+            variantId: line.variantId,
+            productId: line.productId,
+            productName: line.productName,
+            unitLabel: line.unitLabel,
+            sellPrice: line.sellPrice,
+            costPrice: line.costPrice ?? null,
+            qty: line.qty,
+            discountPct: line.discountPct,
+            barcode: line.barcode ?? null,
+          })),
+          unknownLines,
+          payments: payments.map((p) => ({ methodId: p.methodId, amount: p.amount })),
+    };
+
+    const queueOffline = async (reason: string) => {
+      if (!offline) {
+        toast.error(reason);
+        return;
+      }
+      const localNumber = `OFF-${Date.now().toString(36).toUpperCase()}`;
+      await offline.queueInvoice({ storeId: pos.storeId, localNumber, total, payload: payload as never });
+      const localInvoice = buildLocalInvoice(payments, localNumber);
+      setLastInvoice(localInvoice);
+      clearCart();
+      setPayOpen(false);
+      toast.success(`تم البيع أوفلاين — ${localNumber} · هترفع تلقائي أول ما النت يرجع`);
+      if (isAutoPrintEnabled()) window.setTimeout(() => void printInvoice(null), 250);
+    };
+
+    if (offline && !offline.isOnline) {
+      await queueOffline("مفيش اتصال.");
+      setBusy(false);
+      return;
+    }
+
     try {
       const result = await posCheckout({
         data: {
@@ -292,7 +381,10 @@ export function CashierPage() {
         window.setTimeout(() => void printInvoice(result.invoiceId), 250);
       }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "الفاتورة فشلت.");
+      const message = error instanceof Error ? error.message : "الفاتورة فشلت.";
+      const networkIssue = !window.navigator.onLine || /fetch|network|Failed/i.test(message);
+      if (networkIssue && offline) await queueOffline(message);
+      else toast.error(message);
     }
     setBusy(false);
   };
