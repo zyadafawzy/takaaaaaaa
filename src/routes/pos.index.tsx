@@ -412,7 +412,7 @@ export function CashierPage() {
   // اختصارات الكاشير: F2 دفع · F4 تعليق · F6 استرجاع · F8 تفريغ
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "F2" && !isEmpty && pos.shift) {
+      if (event.key === "F2" && !isEmpty && (pos.shift || offline?.localShift)) {
         event.preventDefault();
         setPayOpen(true);
       } else if (event.key === "F4" && !isEmpty) {
@@ -428,7 +428,20 @@ export function CashierPage() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [clearCart, holdCart, isEmpty, pos.shift]);
+  }, [clearCart, holdCart, isEmpty, offline?.localShift, pos.shift]);
+
+  // استبدال الرقم المحلي بالرقم الرسمي بعد ما الفاتورة ترتفع.
+  useEffect(() => {
+    if (!lastInvoice || !offline) return;
+    if (!lastInvoice.invoiceNumber.startsWith("OFF-")) return;
+    const synced = offline.syncedInvoices.find((item) => item.localNumber === lastInvoice.invoiceNumber);
+    if (synced?.officialNumber) {
+      setLastInvoice((current) =>
+        current ? { ...current, invoiceNumber: synced.officialNumber!, id: synced.officialInvoiceId ?? current.id } : current,
+      );
+      toast.info(`الفاتورة ${synced.localNumber} اترفعت برقم رسمي ${synced.officialNumber}.`);
+    }
+  }, [lastInvoice, offline]);
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
@@ -446,7 +459,7 @@ export function CashierPage() {
           </div>
         </div>
 
-        <BarcodeScanner onScan={handleScan} onSearch={handleSearch} busy={busy} disabled={!pos.shift} />
+        <BarcodeScanner onScan={handleScan} onSearch={handleSearch} busy={busy} disabled={!pos.shift && !offline?.localShift} />
 
         {pendingBarcode ? (
           <div className="rounded-lg border border-dashed border-border p-3 text-sm">
