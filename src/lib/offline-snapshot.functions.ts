@@ -20,29 +20,51 @@ export type OfflineSnapshotData = {
   storeId: string;
   branchId: string | null;
   takenAt: string;
+  /** تحديث تفاضلي: الأصناف اللي اتغيّرت بس. */
+  partial: boolean;
   variants: OfflineVariant[];
   customers: Array<{ id: string; name: string; phone: string | null; address: string | null }>;
   paymentMethods: Array<{ id: string; name: string; type: string }>;
 };
 
-/** لقطة كاملة لبيانات نقطة البيع عشان الكاشير يشتغل من غير إنترنت. */
+/**
+ * لقطة بيانات نقطة البيع للعمل بدون إنترنت.
+ * - كل الاستعلامات مفلترة بالمتجر (`store_id`) وبالفرع لما يتحدد.
+ * - لو اتبعت `since` بنرجّع الأصناف المتغيّرة بس (تحديث تفاضلي أسرع بكتير).
+ */
 export const posOfflineSnapshot = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
-    z.object({ storeId: uuid, branchId: uuid.nullable().optional() }).parse(input),
+    z
+      .object({
+        storeId: uuid,
+        branchId: uuid.nullable().optional(),
+        /** آخر وقت تحميل محلي — للتحديث التفاضلي. */
+        since: z.string().datetime().nullable().optional(),
+      })
+      .parse(input),
   )
   .handler(async ({ data, context }): Promise<OfflineSnapshotData> => {
     const { requireStoreRole, ROLE_ANY } = await import("./pos.server");
     await requireStoreRole(context.supabase, context.userId, data.storeId, ROLE_ANY);
 
+    const partial = Boolean(data.since);
+
+    let variantsQuery = context.supabase
+      .from("product_variants")
+      .select("id, product_id, price, cost_price, unit_label, updated_at, products!inner(id, name)")
+      .eq("store_id", data.storeId)
+      .eq("active", true);
+    if (data.since) variantsQuery = variantsQuery.gt("updated_at", data.since);
+
     const [variantsRes, barcodesRes, stockRes, customersRes, methodsRes] = await Promise.all([
+      variantsQuery.limit(8000),
+      context.supabase.from("product_barcodes").select("variant_id, barcode").eq("store_id", data.storeId).limit(20000),
       context.supabase
-        .from("product_variants")
-        .select("id, product_id, price, cost_price, unit_label, active, products!inner(id, name)")
-        .eq("active", true)
-        .limit(5000),
-      context.supabase.from("product_barcodes").select("variant_id, barcode").eq("store_id", data.storeId).limit(10000),
-      context.supabase.from("inventory_stock").select("variant_id, qty_on_hand, branch_id").eq("store_id", data.storeId).limit(10000),
+        .from("inventory_stock")
+        .select("variant_id, qty_on_hand, branch_id")
+        .eq("store_id", data.storeId)
+        .limit(20000),
       context.supabase
         .from("customers")
         .select("id, name, phone, address")
@@ -89,6 +111,7 @@ export const posOfflineSnapshot = createServerFn({ method: "POST" })
       storeId: data.storeId,
       branchId: data.branchId ?? null,
       takenAt: new Date().toISOString(),
+      partial,
       variants,
       customers: (customersRes.data ?? []).map((c) => ({
         id: c.id,
