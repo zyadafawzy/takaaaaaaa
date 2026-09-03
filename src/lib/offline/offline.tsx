@@ -39,12 +39,12 @@ export type OutboxInvoice = {
   total: number;
   payload: Record<string, unknown>;
   attempts: number;
-  lastError?: string;
-  blocked?: boolean;
+  lastError?: string | undefined;
+  blocked?: boolean | undefined;
   /** رقم الفاتورة الرسمي بعد الرفع. */
-  officialNumber?: string;
-  officialInvoiceId?: string;
-  syncedAt?: string;
+  officialNumber?: string | undefined;
+  officialInvoiceId?: string | undefined;
+  syncedAt?: string | undefined;
 };
 
 export type OfflineOpType =
@@ -62,8 +62,8 @@ export type OutboxOp = {
   createdAt: string;
   payload: Record<string, unknown>;
   attempts: number;
-  lastError?: string;
-  blocked?: boolean;
+  lastError?: string | undefined;
+  blocked?: boolean | undefined;
 };
 
 export type LocalShift = {
@@ -72,7 +72,7 @@ export type LocalShift = {
   branchId: string | null;
   openedAt: string;
   openingAmount: number;
-  closedAt?: string;
+  closedAt?: string | undefined;
   invoices: number;
   sales: number;
 };
