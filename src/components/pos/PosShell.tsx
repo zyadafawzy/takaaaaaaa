@@ -78,8 +78,18 @@ export function PosShell({
         return;
       }
       setSignedIn(true);
+      const cacheKey = `pos-boot-${storeSlug ?? "all"}`;
       try {
-        let result = await posBootstrap({ data: nextStoreId ? { storeId: nextStoreId } : {} });
+        let result: Awaited<ReturnType<typeof posBootstrap>>;
+        try {
+          result = await posBootstrap({ data: nextStoreId ? { storeId: nextStoreId } : {} });
+          window.localStorage.setItem(cacheKey, JSON.stringify(result));
+        } catch (error) {
+          const cached = window.localStorage.getItem(cacheKey);
+          if (!cached) throw error;
+          result = JSON.parse(cached) as Awaited<ReturnType<typeof posBootstrap>>;
+          toast.info("شغالين بالنسخة المحفوظة — النت مقطوع.");
+        }
         let active = nextStoreId ?? result.memberships[0]?.storeId ?? null;
 
         // نسخة جوّه لوحة متجر: نلتزم بمتجر المسار بس.
