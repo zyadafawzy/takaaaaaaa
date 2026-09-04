@@ -45,11 +45,22 @@ const tabs: Tab[] = [
  */
 export function useStoreSession(storeSlug: string) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [offlineMode, setOfflineMode] = useState(false);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     void (async () => {
+      const { getOfflineSession } = await import("@/lib/store-offline-auth");
+      const fallbackToOffline = () => {
+        if (cancelled) return false;
+        const session = getOfflineSession(storeSlug);
+        if (!session) return false;
+        setOfflineMode(true);
+        setIsLoggedIn(true);
+        return true;
+      };
+
       try {
         const { supabase } = await import("@/integrations/supabase/client");
         const { data } = await supabase.auth.getSession();
@@ -59,15 +70,19 @@ export function useStoreSession(storeSlug: string) {
         if (cancelled) return;
         if (result.ok) {
           window.sessionStorage.setItem(`store-admin-auth-${storeSlug}`, "true");
+          setOfflineMode(false);
           setIsLoggedIn(true);
-        } else {
+        } else if (!fallbackToOffline()) {
           window.sessionStorage.removeItem(`store-admin-auth-${storeSlug}`);
           setIsLoggedIn(false);
         }
       } catch {
         if (cancelled) return;
-        window.sessionStorage.removeItem(`store-admin-auth-${storeSlug}`);
-        setIsLoggedIn(false);
+        // مفيش نت أو الجلسة مش موجودة: نقبل جلسة أوفلاين محفوظة على الجهاز.
+        if (!fallbackToOffline()) {
+          window.sessionStorage.removeItem(`store-admin-auth-${storeSlug}`);
+          setIsLoggedIn(false);
+        }
       } finally {
         if (!cancelled) setReady(true);
       }
@@ -77,8 +92,9 @@ export function useStoreSession(storeSlug: string) {
     };
   }, [storeSlug]);
 
-  return { isLoggedIn, ready };
+  return { isLoggedIn, ready, offlineMode };
 }
+
 
 export function StoreAdminLogin({ storeSlug, storeName }: { storeSlug: string; storeName: string }) {
   const [username, setUsername] = useState("");
