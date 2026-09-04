@@ -4,6 +4,8 @@
 // For user-authenticated queries (with RLS), use the auth middleware instead.
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
+import { SUPABASE_URL as CONNECTION_URL, serviceRoleKey } from './connection';
+
 
 function isNewSupabaseApiKey(value: string): boolean {
   return value.startsWith('sb_publishable_') || value.startsWith('sb_secret_');
