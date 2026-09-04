@@ -228,18 +228,32 @@ export function CashierPage() {
           shiftId: pos.shift.id,
           customerId: customer?.id ?? null,
           discountAmount: discount,
-          lines: lines.map((line) => ({
-            variantId: line.variantId,
-            productId: line.productId,
-            productName: line.productName,
-            unitLabel: line.unitLabel,
-            sellPrice: line.sellPrice,
-            costPrice: line.costPrice ?? null,
-            qty: line.qty,
-            discountPct: line.discountPct,
-            barcode: line.barcode ?? null,
-          })),
-          unknownLines,
+          lines: lines
+            .filter((line) => !line.catalogItemId)
+            .map((line) => ({
+              variantId: line.variantId,
+              productId: line.productId,
+              productName: line.productName,
+              unitLabel: line.unitLabel,
+              sellPrice: line.sellPrice,
+              costPrice: line.costPrice ?? null,
+              qty: line.qty,
+              discountPct: line.discountPct,
+              barcode: line.barcode ?? null,
+            })),
+          // أصناف الكتالوج تُعلّق كسطور بسعر يدوي (مالهاش مخزون).
+          unknownLines: [
+            ...unknownLines,
+            ...lines
+              .filter((line) => line.catalogItemId)
+              .map((line) => ({
+                barcode: line.barcode ?? MANUAL_BARCODE,
+                name: line.productName,
+                sellPrice: line.sellPrice,
+                qty: line.qty,
+                unitLabel: line.unitLabel,
+              })),
+          ],
         },
       });
       clearCart();
