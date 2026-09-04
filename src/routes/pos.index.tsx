@@ -568,7 +568,8 @@ export function CashierPage() {
                   className="flex w-full items-center gap-3 p-3 text-start transition-colors hover:bg-muted active:bg-muted/70"
                   onClick={async () => {
                     addLine(item);
-                    if (pendingBarcode) {
+                    // أصناف كتالوج الماكينة باركودها مقفول — مش بنربطها بصنف مخزون.
+                    if (pendingBarcode && !(item as { catalogItemId?: string | null }).catalogItemId) {
                       try {
                         await posAttachBarcode({
                           data: { storeId: pos.storeId, variantId: item.variantId, barcode: pendingBarcode },
