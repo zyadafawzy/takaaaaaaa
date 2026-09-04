@@ -289,6 +289,23 @@ export const posSearchVariants = createServerFn({ method: "POST" })
       }
     }
 
+    // صور المنتجات (المنشورة) عشان الكاشير يشوف الصنف بصورته.
+    const imageMap = new Map<string, string>();
+    const productIds = [...new Set((rows ?? []).map((r) => r.product_id))];
+    if (productIds.length > 0) {
+      const { data: images } = await context.supabase
+        .from("product_images")
+        .select("id, product_id, sort_order, published")
+        .in("product_id", productIds)
+        .eq("published", true)
+        .order("sort_order", { ascending: true });
+      for (const image of images ?? []) {
+        if (!imageMap.has(image.product_id)) {
+          imageMap.set(image.product_id, `/api/public/product-image/${image.id}`);
+        }
+      }
+    }
+
     return (rows ?? []).map((r) => {
       const product = r.products as unknown as { id: string; name: string };
       return {
@@ -299,8 +316,10 @@ export const posSearchVariants = createServerFn({ method: "POST" })
         sellPrice: Number(r.price),
         costPrice: r.cost_price == null ? null : Number(r.cost_price),
         stock: stockMap.get(r.id) ?? 0,
+        imageUrl: imageMap.get(r.product_id) ?? null,
       };
     });
+
   });
 
 /* ============================ 4. البيع ============================ */
