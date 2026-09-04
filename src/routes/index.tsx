@@ -28,7 +28,9 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: "تِكّة — سوبرماركت البيت أونلاين" },
       { property: "og:description", content: "اطلب خضار وفاكهة، مخبوزات، ألبان، مشروبات وأساسيات البيت من تِكّة، وأكّد طلبك على واتساب." },
     ],
+    links: [{ rel: "manifest", href: "/manifest.webmanifest" }],
   }),
+
   component: Home,
 });
 
