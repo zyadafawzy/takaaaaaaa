@@ -101,6 +101,22 @@ export function StoreAdminLogin({ storeSlug, storeName }: { storeSlug: string; s
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [online, setOnline] = useState(true);
+  const [canOffline, setCanOffline] = useState(false);
+
+  useEffect(() => {
+    const sync = () => setOnline(navigator.onLine);
+    sync();
+    void import("@/lib/store-offline-auth").then(({ hasOfflineCredentials }) =>
+      setCanOffline(hasOfflineCredentials(storeSlug)),
+    );
+    window.addEventListener("online", sync);
+    window.addEventListener("offline", sync);
+    return () => {
+      window.removeEventListener("online", sync);
+      window.removeEventListener("offline", sync);
+    };
+  }, [storeSlug]);
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background p-4">
@@ -114,6 +130,29 @@ export function StoreAdminLogin({ storeSlug, storeName }: { storeSlug: string; s
           event.preventDefault();
           setBusy(true);
           setError("");
+
+          const offlineAuth = await import("@/lib/store-offline-auth");
+
+          // دخول أوفلاين: لو مفيش نت خالص، نتحقق من البصمة المحفوظة على الجهاز.
+          const tryOffline = async (fallbackMessage: string) => {
+            const result = await offlineAuth.offlineLogin({ storeSlug, username, password });
+            if (result.ok) {
+              window.sessionStorage.setItem(`store-admin-auth-${storeSlug}`, "true");
+              window.location.reload();
+              return;
+            }
+            setError(
+              result.reason === "no-credential"
+                ? "الحساب ده مسجّلش على الجهاز ده قبل كده، لازم أول دخول يكون والنت شغّال."
+                : fallbackMessage,
+            );
+          };
+
+          if (!navigator.onLine) {
+            await tryOffline("كلمة المرور غلط (دخول أوفلاين)");
+            setBusy(false);
+            return;
+          }
 
           try {
             const { storeAdminLoginByPassword } = await import("@/lib/store-assets.functions");
@@ -129,6 +168,13 @@ export function StoreAdminLogin({ storeSlug, storeName }: { storeSlug: string; s
               if (signInError) {
                 setError("حصلت مشكلة في تجهيز الجلسة، جرّب تاني");
               } else {
+                // نحفظ بصمة الدخول عشان الجهاز ده يقدر يدخل أوفلاين بعدين.
+                await offlineAuth.rememberOfflineLogin({
+                  storeSlug,
+                  username,
+                  email: result.email,
+                  password,
+                });
                 window.sessionStorage.setItem(`store-admin-auth-${storeSlug}`, "true");
                 window.location.reload();
               }
@@ -136,12 +182,14 @@ export function StoreAdminLogin({ storeSlug, storeName }: { storeSlug: string; s
               setError("اسم المستخدم أو كلمة المرور غلط");
             }
           } catch {
-            setError("حصلت مشكلة في الدخول");
+            // فشل الاتصال بالسيرفر (النت قطع في نص الطلب): نجرب الدخول الأوفلاين.
+            await tryOffline("حصلت مشكلة في الدخول");
           } finally {
             setBusy(false);
           }
         }}
       >
+
         <div className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
           <ShieldCheck className="size-6" />
         </div>
