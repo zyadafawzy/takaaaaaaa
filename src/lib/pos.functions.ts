@@ -223,6 +223,51 @@ export const posCloseShift = createServerFn({ method: "POST" })
 
 /* ============================ 3. المسح والبحث ============================ */
 
+/** بادئة سطر جاي من كتالوج ماكينة الكاشير (مش صنف مخزون). */
+export const POS_CATALOG_PREFIX = "cat:";
+
+/**
+ * بحث الباركود في كتالوج الماكينة العام (مقفول): الباركود والاسم ثابتين،
+ * والسعر بياخد أولوية سعر المتجر لو موجود.
+ */
+async function lookupMachineCatalog(
+  supabase: { from: (table: string) => any },
+  storeId: string,
+  barcode: string,
+): Promise<PosScanResult | null> {
+  const { data: item } = await supabase
+    .from("pos_catalog_items")
+    .select("id, barcode, name, unit_label, default_price, image_url, active")
+    .eq("barcode", barcode)
+    .eq("active", true)
+    .maybeSingle();
+  if (!item) return null;
+
+  const { data: override } = await supabase
+    .from("pos_store_catalog_prices")
+    .select("sell_price, cost_price, is_active")
+    .eq("store_id", storeId)
+    .eq("item_id", item.id)
+    .maybeSingle();
+
+  if (override && override.is_active === false) return null;
+
+  return {
+    found: true,
+    kind: "catalog",
+    catalogItemId: item.id,
+    barcode: item.barcode,
+    variantId: `${POS_CATALOG_PREFIX}${item.id}`,
+    productId: item.id,
+    productName: item.name,
+    unitLabel: item.unit_label ?? "قطعة",
+    sellPrice: Number(override?.sell_price ?? item.default_price ?? 0),
+    costPrice: override?.cost_price == null ? null : Number(override.cost_price),
+    stock: 0,
+    imageUrl: item.image_url ?? null,
+  };
+}
+
 export const posScanBarcode = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
@@ -235,6 +280,19 @@ export const posScanBarcode = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }): Promise<PosScanResult> => {
+    // أصناف المتجر ليها الأولوية، بعدها كتالوج الماكينة، وآخر حاجة تقرير المجهولات.
+    const { data: mapped } = await context.supabase
+      .from("product_barcodes")
+      .select("variant_id")
+      .eq("store_id", data.storeId)
+      .eq("barcode", data.barcode)
+      .maybeSingle();
+
+    if (!mapped) {
+      const catalogHit = await lookupMachineCatalog(context.supabase as never, data.storeId, data.barcode);
+      if (catalogHit) return catalogHit;
+    }
+
     const { data: result, error } = await context.supabase.rpc("rpc_scan_barcode", {
       p_store_id: data.storeId,
       p_barcode: data.barcode,
@@ -306,7 +364,7 @@ export const posSearchVariants = createServerFn({ method: "POST" })
       }
     }
 
-    return (rows ?? []).map((r) => {
+    const variantResults = (rows ?? []).map((r) => {
       const product = r.products as unknown as { id: string; name: string };
       return {
         variantId: r.id,
@@ -317,9 +375,57 @@ export const posSearchVariants = createServerFn({ method: "POST" })
         costPrice: r.cost_price == null ? null : Number(r.cost_price),
         stock: stockMap.get(r.id) ?? 0,
         imageUrl: imageMap.get(r.product_id) ?? null,
+        catalogItemId: null as string | null,
+        barcode: null as string | null,
       };
     });
 
+    // بحث كتالوج ماكينة الكاشير (نفس الأسماء العربية) لو النتائج قليلة.
+    if (variantResults.length < 20) {
+      const client = context.supabase as never as { from: (t: string) => any };
+      const { data: catalog } = await client
+        .from("pos_catalog_items")
+        .select("id, barcode, name, unit_label, default_price, image_url")
+        .eq("active", true)
+        .ilike("name", `%${data.query}%`)
+        .limit(20 - variantResults.length);
+
+      const ids = (catalog ?? []).map((c: { id: string }) => c.id);
+      const priceMap = new Map<string, { sell: number; cost: number | null; active: boolean }>();
+      if (ids.length > 0) {
+        const { data: prices } = await client
+          .from("pos_store_catalog_prices")
+          .select("item_id, sell_price, cost_price, is_active")
+          .eq("store_id", data.storeId)
+          .in("item_id", ids);
+        for (const row of prices ?? []) {
+          priceMap.set(row.item_id, {
+            sell: Number(row.sell_price),
+            cost: row.cost_price == null ? null : Number(row.cost_price),
+            active: row.is_active !== false,
+          });
+        }
+      }
+
+      for (const item of catalog ?? []) {
+        const override = priceMap.get(item.id);
+        if (override && !override.active) continue;
+        variantResults.push({
+          variantId: `${POS_CATALOG_PREFIX}${item.id}`,
+          productId: item.id,
+          productName: item.name,
+          unitLabel: item.unit_label ?? "قطعة",
+          sellPrice: override?.sell ?? Number(item.default_price ?? 0),
+          costPrice: override?.cost ?? null,
+          stock: 0,
+          imageUrl: item.image_url ?? null,
+          catalogItemId: item.id,
+          barcode: item.barcode,
+        });
+      }
+    }
+
+    return variantResults;
   });
 
 /* ============================ 4. البيع ============================ */
@@ -345,6 +451,18 @@ export const unknownLineSchema = z.object({
   unitLabel: z.string().max(40).default("قطعة"),
   notes: z.string().max(300).optional(),
 });
+
+/** سطر جاي من كتالوج ماكينة الكاشير: الباركود والاسم من الكتالوج، السعر من المتجر. */
+export const catalogLineSchema = z.object({
+  catalogItemId: uuid,
+  productName: z.string().trim().min(1).max(200),
+  unitLabel: z.string().max(40).default("قطعة"),
+  sellPrice: z.number().min(0).max(1_000_000),
+  qty: z.number().gt(0).max(100_000),
+  discountPct: z.number().min(0).max(100).default(0),
+  barcode: z.string().max(64).nullable().optional(),
+});
+
 
 
 export const posCheckout = createServerFn({ method: "POST" })
@@ -372,6 +490,7 @@ export const posCheckout = createServerFn({ method: "POST" })
         notes: z.string().max(400).optional(),
         lines: z.array(cartLineSchema).max(200).default([]),
         unknownLines: z.array(unknownLineSchema).max(50).default([]),
+        catalogLines: z.array(catalogLineSchema).max(200).default([]),
         payments: z
           .array(z.object({ methodId: uuid, amount: z.number().gt(0).max(1_000_000), reference: z.string().max(60).optional() }))
           .max(5)
@@ -383,7 +502,9 @@ export const posCheckout = createServerFn({ method: "POST" })
     const { requireStoreRole, ROLE_WRITE, round2 } = await import("./pos.server");
     await requireStoreRole(context.supabase, context.userId, data.storeId, ROLE_WRITE);
 
-    if (data.lines.length === 0 && data.unknownLines.length === 0) throw new Error("CART_EMPTY");
+    if (data.lines.length === 0 && data.unknownLines.length === 0 && data.catalogLines.length === 0) {
+      throw new Error("CART_EMPTY");
+    }
 
     // 1) منع التكرار: نفس المعرّف المحلي = نفس الفاتورة، نرجّع اللي اتسجلت خلاص.
     if (data.clientInvoiceId) {
@@ -546,6 +667,26 @@ export const posCheckout = createServerFn({ method: "POST" })
         line_total: round2(gross * (1 - line.discountPct / 100)),
       };
     });
+
+    // أصناف كتالوج ماكينة الكاشير: مالهاش مخزون، الباركود مقفول من الكتالوج العام.
+    for (const line of data.catalogLines) {
+      items.push({
+        invoice_id: invoice.id,
+        variant_id: null,
+        product_id: null,
+        barcode_scanned: line.barcode ?? null,
+        product_name_snapshot: line.productName,
+        unit_label_snapshot: line.unitLabel || "قطعة",
+        sell_price_snapshot: line.sellPrice,
+        cost_price_snapshot: null,
+        qty: line.qty,
+        discount_pct: line.discountPct,
+        line_total: round2(line.sellPrice * line.qty * (1 - line.discountPct / 100)),
+        catalog_item_id: line.catalogItemId,
+      } as unknown as (typeof items)[number]);
+    }
+
+
 
     // الأصناف غير المسجّلة: نسجّل الباركود في تقرير المجهولات ونضيف سطر snapshot بسعر يدوي.
     for (const unknown of data.unknownLines) {
