@@ -197,6 +197,20 @@ export function StoreAdminLogin({ storeSlug, storeName }: { storeSlug: string; s
         <p className="mt-1 text-center text-sm text-muted-foreground">
           ادخل باسم المستخدم وكلمة المرور الخاصة بحسابك.
         </p>
+        {!online ? (
+          <p
+            className={`mt-3 rounded-xl border px-3 py-2 text-center text-[11px] font-bold ${
+              canOffline
+                ? "border-warning/40 bg-warning/10 text-warning"
+                : "border-destructive/40 bg-destructive/10 text-destructive"
+            }`}
+          >
+            {canOffline
+              ? "مفيش نت — الدخول هيتم أوفلاين بنفس اسم المستخدم وكلمة المرور المسجّلين على الجهاز."
+              : "مفيش نت، والجهاز ده مفيهوش حساب محفوظ. لازم أول دخول يكون والنت شغّال."}
+          </p>
+        ) : null}
+
 
         <div className="mt-6 space-y-3">
           <div>
