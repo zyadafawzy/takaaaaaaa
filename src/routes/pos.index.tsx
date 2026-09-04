@@ -77,6 +77,8 @@ export function CashierPage() {
   const [holdOpen, setHoldOpen] = useState(false);
   const [held, setHeld] = useState<PosHeldInvoice[]>([]);
   const [autoPrint, setAutoPrint] = useState(true);
+  const [extraAmount, setExtraAmount] = useState("");
+  const [extraLabel, setExtraLabel] = useState("");
 
   useEffect(() => {
     setAutoPrint(isAutoPrintEnabled());
