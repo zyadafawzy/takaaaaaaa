@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { PauseCircle, Printer, Trash2 } from "lucide-react";
+import { PauseCircle, Plus, Printer, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { BarcodeScanner } from "@/components/pos/BarcodeScanner";
