@@ -143,3 +143,35 @@ bun run dev
 ---
 
 Built with [Lovable](https://lovable.dev).
+
+## الاتصال الثابت بـ Supabase (يشتغل في أي مكان)
+
+إعدادات الاتصال متعرّفة داخل الكود في `src/integrations/supabase/connection.ts`:
+
+- `SUPABASE_URL` و `SUPABASE_PUBLISHABLE_KEY` و `SUPABASE_PROJECT_ID` لها قيم ثابتة
+  محفوظة في الملف، فالمشروع يفضل واصل بالداتابيز حتى لو اتعمل remix، أو اتنقل
+  خارج Lovable، أو اتشغّل على `localhost` بدون ملف `.env` خالص.
+- لو فيه متغيرات بيئة موجودة (`VITE_SUPABASE_URL` / `SUPABASE_URL` … إلخ) بتاخد
+  الأولوية — ده يخلي تحويل المشروع لداتابيز تانية مجرد تغيير env بدون تعديل كود.
+- كل عملاء Supabase (المتصفح، القراءة العامة من الخادم، auth middleware، عميل
+  الأدمن) بيقروا من الملف ده، فمفيش أي مكان تاني بيقرأ الإعدادات مباشرة.
+
+المفتاح الوحيد اللي **لازم** يبقى في البيئة هو `SUPABASE_SERVICE_ROLE_KEY`
+(لعمليات الأدمن وتسليم صور المخزن الخاص). على localhost:
+
+```bash
+SUPABASE_SERVICE_ROLE_KEY=<service role key من Supabase → Settings → API>
+```
+
+## صور المنتجات
+
+الصور بتتسلّم عبر `/api/public/product-image/:id?v=..&w=..` من bucket خاص بعد
+التحقق إن الصورة `published = true` وإن المنتج قابل للبيع
+(`product_is_sellable`). لو ظهرت كلمة «بدون صورة» يبقى السبب واحد من دول:
+
+1. `product_images.published = false` للصورة (بيحصل لصور استيراد لسه مش معتمدة).
+2. المنتج نفسه مش `published`، فالـ endpoint يرجّع 404.
+3. `SUPABASE_SERVICE_ROLE_KEY` ناقص، فالتسليم من المخزن الخاص بيفشل.
+
+اتعمل migration بيفعّل عرض كل صور المنتجات المنشورة اللي كانت مرفوعة وغير
+مُفعّلة، والنتيجة: مفيش أي منتج منشور بدون صورة.

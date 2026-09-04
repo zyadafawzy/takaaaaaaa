@@ -30,12 +30,8 @@ export const requireSupabaseAuth = createMiddleware().server(
   async ({ next }) => {
     const request = getRequest();
     
-    const SUPABASE_URL = process.env['SUPABASE_URL'];
-    const SUPABASE_PUBLISHABLE_KEY = process.env['SUPABASE_PUBLISHABLE_KEY'];
+    const { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } = await import('./connection');
 
-    if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
-      throw new Error('Missing Supabase env vars');
-    }
     
     if (!request?.headers) {
       throw new Error('Unauthorized: No request headers');

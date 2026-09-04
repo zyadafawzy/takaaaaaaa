@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { SUPABASE_URL } from "@/integrations/supabase/connection";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
@@ -101,7 +102,7 @@ export const adminListProducts = createServerFn({ method: "GET" })
       
       let thumbnailUrl = null;
       if (mainImage) {
-        thumbnailUrl = `${process.env['SUPABASE_URL']}/storage/v1/object/public/${mainImage.bucket_id}/${mainImage.storage_path}`;
+        thumbnailUrl = `${SUPABASE_URL}/storage/v1/object/public/${mainImage.bucket_id}/${mainImage.storage_path}`;
       }
 
       return {
@@ -166,7 +167,7 @@ export const adminGetProduct = createServerFn({ method: "GET" })
 
     const images = (product.product_images ?? []).map((img: any) => ({
       ...img,
-      url: `${process.env['SUPABASE_URL']}/storage/v1/object/public/${img.bucket_id}/${img.storage_path}`
+      url: `${SUPABASE_URL}/storage/v1/object/public/${img.bucket_id}/${img.storage_path}`
     }));
 
     return {
