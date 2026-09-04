@@ -56,6 +56,10 @@ export const Route = createFileRoute("/pos/")({
   component: CashierPage,
 });
 
+/** باركودات داخلية لسطور الكاشير اليدوية (مش أصناف حقيقية). */
+const MANUAL_BARCODE = "MANUAL";
+const EXTRA_BARCODE = "EXTRA";
+
 export function CashierPage() {
   const pos = usePos();
   const offline = useOffline();
