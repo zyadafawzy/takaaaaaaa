@@ -1227,6 +1227,7 @@ export type Database = {
       invoice_items: {
         Row: {
           barcode_scanned: string | null
+          catalog_item_id: string | null
           cost_price_snapshot: number | null
           created_at: string
           discount_amount: number
@@ -1245,6 +1246,7 @@ export type Database = {
         }
         Insert: {
           barcode_scanned?: string | null
+          catalog_item_id?: string | null
           cost_price_snapshot?: number | null
           created_at?: string
           discount_amount?: number
@@ -1263,6 +1265,7 @@ export type Database = {
         }
         Update: {
           barcode_scanned?: string | null
+          catalog_item_id?: string | null
           cost_price_snapshot?: number | null
           created_at?: string
           discount_amount?: number
@@ -1280,6 +1283,13 @@ export type Database = {
           variant_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "invoice_items_catalog_item_id_fkey"
+            columns: ["catalog_item_id"]
+            isOneToOne: false
+            referencedRelation: "pos_catalog_items"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "invoice_items_invoice_id_fkey"
             columns: ["invoice_id"]
@@ -1904,6 +1914,54 @@ export type Database = {
         }
         Relationships: []
       }
+      pos_catalog_items: {
+        Row: {
+          active: boolean
+          barcode: string
+          brand: string | null
+          category_code: string | null
+          created_at: string
+          default_price: number
+          id: string
+          image_url: string | null
+          name: string
+          pack_size: string | null
+          source_ref: string | null
+          unit_label: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          barcode: string
+          brand?: string | null
+          category_code?: string | null
+          created_at?: string
+          default_price?: number
+          id?: string
+          image_url?: string | null
+          name: string
+          pack_size?: string | null
+          source_ref?: string | null
+          unit_label?: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          barcode?: string
+          brand?: string | null
+          category_code?: string | null
+          created_at?: string
+          default_price?: number
+          id?: string
+          image_url?: string | null
+          name?: string
+          pack_size?: string | null
+          source_ref?: string | null
+          unit_label?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       pos_inventory_movements: {
         Row: {
           branch_id: string | null
@@ -2152,6 +2210,57 @@ export type Database = {
           },
           {
             foreignKeyName: "pos_members_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pos_store_catalog_prices: {
+        Row: {
+          cost_price: number | null
+          created_at: string
+          id: string
+          is_active: boolean
+          item_id: string
+          sell_price: number
+          store_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          cost_price?: number | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          item_id: string
+          sell_price: number
+          store_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          cost_price?: number | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          item_id?: string
+          sell_price?: number
+          store_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pos_store_catalog_prices_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "pos_catalog_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pos_store_catalog_prices_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
             referencedRelation: "stores"

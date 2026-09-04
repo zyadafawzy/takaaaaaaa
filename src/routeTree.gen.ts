@@ -39,6 +39,7 @@ import { Route as CategorySlugRouteImport } from './routes/category.$slug'
 import { Route as DeveloperIndexRouteImport } from './routes/developer.index'
 import { Route as DeveloperNewRouteImport } from './routes/developer.new'
 import { Route as PosIndexRouteImport } from './routes/pos.index'
+import { Route as PosCatalogRouteImport } from './routes/pos.catalog'
 import { Route as PosCustomersRouteImport } from './routes/pos.customers'
 import { Route as PosDamagedRouteImport } from './routes/pos.damaged'
 import { Route as PosInventoryRouteImport } from './routes/pos.inventory'
@@ -81,6 +82,7 @@ import { Route as SStoreSlugOrderTokenRouteImport } from './routes/s.$storeSlug.
 import { Route as SStoreSlugProductSlugRouteImport } from './routes/s.$storeSlug.product.$slug'
 import { Route as SStoreSlugTrackTokenRouteImport } from './routes/s.$storeSlug.track.$token'
 import { Route as SStoreSlugAdminPosIndexRouteImport } from './routes/s.$storeSlug.admin.pos.index'
+import { Route as SStoreSlugAdminPosCatalogRouteImport } from './routes/s.$storeSlug.admin.pos.catalog'
 import { Route as SStoreSlugAdminPosCustomersRouteImport } from './routes/s.$storeSlug.admin.pos.customers'
 import { Route as SStoreSlugAdminPosDamagedRouteImport } from './routes/s.$storeSlug.admin.pos.damaged'
 import { Route as SStoreSlugAdminPosInventoryRouteImport } from './routes/s.$storeSlug.admin.pos.inventory'
@@ -240,6 +242,11 @@ const DeveloperNewRoute = DeveloperNewRouteImport.update({
 const PosIndexRoute = PosIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => PosRoute,
+} as any)
+const PosCatalogRoute = PosCatalogRouteImport.update({
+  id: '/catalog',
+  path: '/catalog',
   getParentRoute: () => PosRoute,
 } as any)
 const PosCustomersRoute = PosCustomersRouteImport.update({
@@ -455,6 +462,12 @@ const SStoreSlugAdminPosIndexRoute = SStoreSlugAdminPosIndexRouteImport.update({
   path: '/',
   getParentRoute: () => SStoreSlugAdminPosRoute,
 } as any)
+const SStoreSlugAdminPosCatalogRoute =
+  SStoreSlugAdminPosCatalogRouteImport.update({
+    id: '/catalog',
+    path: '/catalog',
+    getParentRoute: () => SStoreSlugAdminPosRoute,
+  } as any)
 const SStoreSlugAdminPosCustomersRoute =
   SStoreSlugAdminPosCustomersRouteImport.update({
     id: '/customers',
@@ -544,6 +557,7 @@ export interface FileRoutesByFullPath {
   '/admin/settings': typeof AdminSettingsRoute
   '/category/$slug': typeof CategorySlugRoute
   '/developer/new': typeof DeveloperNewRoute
+  '/pos/catalog': typeof PosCatalogRoute
   '/pos/customers': typeof PosCustomersRoute
   '/pos/damaged': typeof PosDamagedRoute
   '/pos/inventory': typeof PosInventoryRoute
@@ -588,6 +602,7 @@ export interface FileRoutesByFullPath {
   '/s/$storeSlug/product/$slug': typeof SStoreSlugProductSlugRoute
   '/s/$storeSlug/track/$token': typeof SStoreSlugTrackTokenRoute
   '/s/$storeSlug/admin/': typeof SStoreSlugAdminIndexRoute
+  '/s/$storeSlug/admin/pos/catalog': typeof SStoreSlugAdminPosCatalogRoute
   '/s/$storeSlug/admin/pos/customers': typeof SStoreSlugAdminPosCustomersRoute
   '/s/$storeSlug/admin/pos/damaged': typeof SStoreSlugAdminPosDamagedRoute
   '/s/$storeSlug/admin/pos/inventory': typeof SStoreSlugAdminPosInventoryRoute
@@ -625,6 +640,7 @@ export interface FileRoutesByTo {
   '/admin/settings': typeof AdminSettingsRoute
   '/category/$slug': typeof CategorySlugRoute
   '/developer/new': typeof DeveloperNewRoute
+  '/pos/catalog': typeof PosCatalogRoute
   '/pos/customers': typeof PosCustomersRoute
   '/pos/damaged': typeof PosDamagedRoute
   '/pos/inventory': typeof PosInventoryRoute
@@ -666,6 +682,7 @@ export interface FileRoutesByTo {
   '/s/$storeSlug/product/$slug': typeof SStoreSlugProductSlugRoute
   '/s/$storeSlug/track/$token': typeof SStoreSlugTrackTokenRoute
   '/s/$storeSlug/admin': typeof SStoreSlugAdminIndexRoute
+  '/s/$storeSlug/admin/pos/catalog': typeof SStoreSlugAdminPosCatalogRoute
   '/s/$storeSlug/admin/pos/customers': typeof SStoreSlugAdminPosCustomersRoute
   '/s/$storeSlug/admin/pos/damaged': typeof SStoreSlugAdminPosDamagedRoute
   '/s/$storeSlug/admin/pos/inventory': typeof SStoreSlugAdminPosInventoryRoute
@@ -707,6 +724,7 @@ export interface FileRoutesById {
   '/admin/settings': typeof AdminSettingsRoute
   '/category/$slug': typeof CategorySlugRoute
   '/developer/new': typeof DeveloperNewRoute
+  '/pos/catalog': typeof PosCatalogRoute
   '/pos/customers': typeof PosCustomersRoute
   '/pos/damaged': typeof PosDamagedRoute
   '/pos/inventory': typeof PosInventoryRoute
@@ -751,6 +769,7 @@ export interface FileRoutesById {
   '/s/$storeSlug/product/$slug': typeof SStoreSlugProductSlugRoute
   '/s/$storeSlug/track/$token': typeof SStoreSlugTrackTokenRoute
   '/s/$storeSlug/admin/': typeof SStoreSlugAdminIndexRoute
+  '/s/$storeSlug/admin/pos/catalog': typeof SStoreSlugAdminPosCatalogRoute
   '/s/$storeSlug/admin/pos/customers': typeof SStoreSlugAdminPosCustomersRoute
   '/s/$storeSlug/admin/pos/damaged': typeof SStoreSlugAdminPosDamagedRoute
   '/s/$storeSlug/admin/pos/inventory': typeof SStoreSlugAdminPosInventoryRoute
@@ -793,6 +812,7 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/category/$slug'
     | '/developer/new'
+    | '/pos/catalog'
     | '/pos/customers'
     | '/pos/damaged'
     | '/pos/inventory'
@@ -837,6 +857,7 @@ export interface FileRouteTypes {
     | '/s/$storeSlug/product/$slug'
     | '/s/$storeSlug/track/$token'
     | '/s/$storeSlug/admin/'
+    | '/s/$storeSlug/admin/pos/catalog'
     | '/s/$storeSlug/admin/pos/customers'
     | '/s/$storeSlug/admin/pos/damaged'
     | '/s/$storeSlug/admin/pos/inventory'
@@ -874,6 +895,7 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/category/$slug'
     | '/developer/new'
+    | '/pos/catalog'
     | '/pos/customers'
     | '/pos/damaged'
     | '/pos/inventory'
@@ -915,6 +937,7 @@ export interface FileRouteTypes {
     | '/s/$storeSlug/product/$slug'
     | '/s/$storeSlug/track/$token'
     | '/s/$storeSlug/admin'
+    | '/s/$storeSlug/admin/pos/catalog'
     | '/s/$storeSlug/admin/pos/customers'
     | '/s/$storeSlug/admin/pos/damaged'
     | '/s/$storeSlug/admin/pos/inventory'
@@ -955,6 +978,7 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/category/$slug'
     | '/developer/new'
+    | '/pos/catalog'
     | '/pos/customers'
     | '/pos/damaged'
     | '/pos/inventory'
@@ -999,6 +1023,7 @@ export interface FileRouteTypes {
     | '/s/$storeSlug/product/$slug'
     | '/s/$storeSlug/track/$token'
     | '/s/$storeSlug/admin/'
+    | '/s/$storeSlug/admin/pos/catalog'
     | '/s/$storeSlug/admin/pos/customers'
     | '/s/$storeSlug/admin/pos/damaged'
     | '/s/$storeSlug/admin/pos/inventory'
@@ -1248,6 +1273,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/pos/'
       preLoaderRoute: typeof PosIndexRouteImport
+      parentRoute: typeof PosRoute
+    }
+    '/pos/catalog': {
+      id: '/pos/catalog'
+      path: '/catalog'
+      fullPath: '/pos/catalog'
+      preLoaderRoute: typeof PosCatalogRouteImport
       parentRoute: typeof PosRoute
     }
     '/pos/customers': {
@@ -1544,6 +1576,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SStoreSlugAdminPosIndexRouteImport
       parentRoute: typeof SStoreSlugAdminPosRoute
     }
+    '/s/$storeSlug/admin/pos/catalog': {
+      id: '/s/$storeSlug/admin/pos/catalog'
+      path: '/catalog'
+      fullPath: '/s/$storeSlug/admin/pos/catalog'
+      preLoaderRoute: typeof SStoreSlugAdminPosCatalogRouteImport
+      parentRoute: typeof SStoreSlugAdminPosRoute
+    }
     '/s/$storeSlug/admin/pos/customers': {
       id: '/s/$storeSlug/admin/pos/customers'
       path: '/customers'
@@ -1690,6 +1729,7 @@ const DeveloperRouteWithChildren = DeveloperRoute._addFileChildren(
 )
 
 interface PosRouteChildren {
+  PosCatalogRoute: typeof PosCatalogRoute
   PosCustomersRoute: typeof PosCustomersRoute
   PosDamagedRoute: typeof PosDamagedRoute
   PosInventoryRoute: typeof PosInventoryRoute
@@ -1704,6 +1744,7 @@ interface PosRouteChildren {
 }
 
 const PosRouteChildren: PosRouteChildren = {
+  PosCatalogRoute: PosCatalogRoute,
   PosCustomersRoute: PosCustomersRoute,
   PosDamagedRoute: PosDamagedRoute,
   PosInventoryRoute: PosInventoryRoute,
@@ -1720,6 +1761,7 @@ const PosRouteChildren: PosRouteChildren = {
 const PosRouteWithChildren = PosRoute._addFileChildren(PosRouteChildren)
 
 interface SStoreSlugAdminPosRouteChildren {
+  SStoreSlugAdminPosCatalogRoute: typeof SStoreSlugAdminPosCatalogRoute
   SStoreSlugAdminPosCustomersRoute: typeof SStoreSlugAdminPosCustomersRoute
   SStoreSlugAdminPosDamagedRoute: typeof SStoreSlugAdminPosDamagedRoute
   SStoreSlugAdminPosInventoryRoute: typeof SStoreSlugAdminPosInventoryRoute
@@ -1734,6 +1776,7 @@ interface SStoreSlugAdminPosRouteChildren {
 }
 
 const SStoreSlugAdminPosRouteChildren: SStoreSlugAdminPosRouteChildren = {
+  SStoreSlugAdminPosCatalogRoute: SStoreSlugAdminPosCatalogRoute,
   SStoreSlugAdminPosCustomersRoute: SStoreSlugAdminPosCustomersRoute,
   SStoreSlugAdminPosDamagedRoute: SStoreSlugAdminPosDamagedRoute,
   SStoreSlugAdminPosInventoryRoute: SStoreSlugAdminPosInventoryRoute,

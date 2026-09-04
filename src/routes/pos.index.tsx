@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { PauseCircle, Printer, Trash2 } from "lucide-react";
+import { PauseCircle, Plus, Printer, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { BarcodeScanner } from "@/components/pos/BarcodeScanner";
@@ -56,6 +56,10 @@ export const Route = createFileRoute("/pos/")({
   component: CashierPage,
 });
 
+/** باركودات داخلية لسطور الكاشير اليدوية (مش أصناف حقيقية). */
+const MANUAL_BARCODE = "MANUAL";
+const EXTRA_BARCODE = "EXTRA";
+
 export function CashierPage() {
   const pos = usePos();
   const offline = useOffline();
@@ -73,6 +77,8 @@ export function CashierPage() {
   const [holdOpen, setHoldOpen] = useState(false);
   const [held, setHeld] = useState<PosHeldInvoice[]>([]);
   const [autoPrint, setAutoPrint] = useState(true);
+  const [extraAmount, setExtraAmount] = useState("");
+  const [extraLabel, setExtraLabel] = useState("");
 
   useEffect(() => {
     setAutoPrint(isAutoPrintEnabled());
@@ -91,6 +97,14 @@ export function CashierPage() {
     setCustomer(null);
     setInvoiceDiscount("0");
   }, []);
+
+  /** زيادة مبلغ سريعة على الفاتورة (سطر بسعر يدوي وكمية ١). */
+  const addExtraAmount = (amount: number, label: string) => {
+    setUnknownLines((current) => [
+      ...current,
+      { barcode: EXTRA_BARCODE, name: label, sellPrice: Math.round(amount * 100) / 100, qty: 1, unitLabel: "مبلغ" },
+    ]);
+  };
 
   const addLine = (item: Omit<PosCartLine, "qty" | "discountPct" | "barcode"> & { barcode?: string | null }) => {
     setLines((current) => {
@@ -214,18 +228,32 @@ export function CashierPage() {
           shiftId: pos.shift.id,
           customerId: customer?.id ?? null,
           discountAmount: discount,
-          lines: lines.map((line) => ({
-            variantId: line.variantId,
-            productId: line.productId,
-            productName: line.productName,
-            unitLabel: line.unitLabel,
-            sellPrice: line.sellPrice,
-            costPrice: line.costPrice ?? null,
-            qty: line.qty,
-            discountPct: line.discountPct,
-            barcode: line.barcode ?? null,
-          })),
-          unknownLines,
+          lines: lines
+            .filter((line) => !line.catalogItemId)
+            .map((line) => ({
+              variantId: line.variantId,
+              productId: line.productId,
+              productName: line.productName,
+              unitLabel: line.unitLabel,
+              sellPrice: line.sellPrice,
+              costPrice: line.costPrice ?? null,
+              qty: line.qty,
+              discountPct: line.discountPct,
+              barcode: line.barcode ?? null,
+            })),
+          // أصناف الكتالوج تُعلّق كسطور بسعر يدوي (مالهاش مخزون).
+          unknownLines: [
+            ...unknownLines,
+            ...lines
+              .filter((line) => line.catalogItemId)
+              .map((line) => ({
+                barcode: line.barcode ?? MANUAL_BARCODE,
+                name: line.productName,
+                sellPrice: line.sellPrice,
+                qty: line.qty,
+                unitLabel: line.unitLabel,
+              })),
+          ],
         },
       });
       clearCart();
@@ -319,17 +347,30 @@ export function CashierPage() {
       customerId: customer?.id ?? null,
       discountAmount: discount,
       taxAmount: 0,
-      lines: lines.map((line) => ({
-        variantId: line.variantId,
-        productId: line.productId,
-        productName: line.productName,
-        unitLabel: line.unitLabel,
-        sellPrice: line.sellPrice,
-        costPrice: line.costPrice ?? null,
-        qty: line.qty,
-        discountPct: line.discountPct,
-        barcode: line.barcode ?? null,
-      })),
+      lines: lines
+        .filter((line) => !line.catalogItemId)
+        .map((line) => ({
+          variantId: line.variantId,
+          productId: line.productId,
+          productName: line.productName,
+          unitLabel: line.unitLabel,
+          sellPrice: line.sellPrice,
+          costPrice: line.costPrice ?? null,
+          qty: line.qty,
+          discountPct: line.discountPct,
+          barcode: line.barcode ?? null,
+        })),
+      catalogLines: lines
+        .filter((line) => line.catalogItemId)
+        .map((line) => ({
+          catalogItemId: line.catalogItemId!,
+          productName: line.productName,
+          unitLabel: line.unitLabel,
+          sellPrice: line.sellPrice,
+          qty: line.qty,
+          discountPct: line.discountPct,
+          barcode: line.barcode ?? null,
+        })),
       unknownLines,
       payments: payments.map((p) => ({ methodId: p.methodId, amount: p.amount })),
     };
@@ -448,7 +489,7 @@ export function CashierPage() {
       <section className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h1 className="text-2xl font-extrabold">الكاشير</h1>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Button variant="outline" size="sm" disabled={isEmpty || busy} onClick={() => void holdCart()}>
               <PauseCircle className="size-4" />
               تعليق (F4)
@@ -456,8 +497,53 @@ export function CashierPage() {
             <Button variant="outline" size="sm" onClick={() => setHoldOpen(true)}>
               معلّقة ({held.length})
             </Button>
+            <Button variant="secondary" size="sm" onClick={() => setUnknownBarcode(MANUAL_BARCODE)}>
+              صنف يدوي
+            </Button>
           </div>
         </div>
+
+        {/* زيادة مبلغ على الفاتورة (خدمة، كيس، فرق سعر…) */}
+        <form
+          className="flex flex-wrap items-end gap-2 rounded-xl border border-dashed border-border p-3"
+          onSubmit={(event) => {
+            event.preventDefault();
+            const value = Number(extraAmount);
+            if (!Number.isFinite(value) || value <= 0) {
+              toast.error("اكتب مبلغ صحيح.");
+              return;
+            }
+            addExtraAmount(value, extraLabel.trim() || "زيادة على الفاتورة");
+            setExtraAmount("");
+            setExtraLabel("");
+          }}
+        >
+          <div className="space-y-1">
+            <Label htmlFor="extra-amount">زيادة مبلغ (جنيه)</Label>
+            <Input
+              id="extra-amount"
+              value={extraAmount}
+              inputMode="decimal"
+              placeholder="5"
+              className="h-11 w-28 text-center"
+              onChange={(event) => setExtraAmount(event.target.value)}
+            />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="extra-label">السبب</Label>
+            <Input
+              id="extra-label"
+              value={extraLabel}
+              placeholder="كيس / خدمة / فرق سعر"
+              className="h-11 w-52"
+              onChange={(event) => setExtraLabel(event.target.value)}
+            />
+          </div>
+          <Button type="submit" size="sm" variant="outline">
+            <Plus className="size-4" />
+            زوّد
+          </Button>
+        </form>
 
         <BarcodeScanner onScan={handleScan} onSearch={handleSearch} busy={busy} disabled={!pos.shift && !offline?.localShift} />
 
@@ -482,7 +568,8 @@ export function CashierPage() {
                   className="flex w-full items-center gap-3 p-3 text-start transition-colors hover:bg-muted active:bg-muted/70"
                   onClick={async () => {
                     addLine(item);
-                    if (pendingBarcode) {
+                    // أصناف كتالوج الماكينة باركودها مقفول — مش بنربطها بصنف مخزون.
+                    if (pendingBarcode && !(item as { catalogItemId?: string | null }).catalogItemId) {
                       try {
                         await posAttachBarcode({
                           data: { storeId: pos.storeId, variantId: item.variantId, barcode: pendingBarcode },

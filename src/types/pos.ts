@@ -53,6 +53,10 @@ export type PosScanHit = {
   sellPrice: number;
   costPrice: number | null;
   stock: number;
+  /** variant = صنف مخزون بالمتجر · catalog = صنف من كتالوج ماكينة الكاشير. */
+  kind?: "variant" | "catalog";
+  catalogItemId?: string | null;
+  imageUrl?: string | null;
 };
 
 export type PosScanMiss = { found: false; barcode: string };
@@ -69,6 +73,23 @@ export type PosCartLine = {
   discountPct: number;
   barcode: string | null;
   stock: number;
+  catalogItemId?: string | null;
+  imageUrl?: string | null;
+};
+
+/** صنف كتالوج ماكينة الكاشير + سعر المتجر (لو محدد). */
+export type PosCatalogItem = {
+  id: string;
+  barcode: string;
+  name: string;
+  brand: string | null;
+  packSize: string | null;
+  unitLabel: string;
+  defaultPrice: number;
+  imageUrl: string | null;
+  storePrice: number | null;
+  storeCost: number | null;
+  storeActive: boolean;
 };
 
 export type PosCustomer = {

@@ -38,6 +38,7 @@ const NAV_ITEMS = [
   { suffix: "/suppliers", label: "الموردون", exact: false },
   { suffix: "/purchases", label: "المشتريات", exact: false },
   { suffix: "/inventory", label: "المخزون", exact: false },
+  { suffix: "/catalog", label: "كتالوج الماكينة", exact: false },
   { suffix: "/unknown", label: "أصناف مجهولة", exact: false },
   { suffix: "/damaged", label: "هوالك وتالف", exact: false },
   { suffix: "/pending", label: "المعلّقة", exact: false },
