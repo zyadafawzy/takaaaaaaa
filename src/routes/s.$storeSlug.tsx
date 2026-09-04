@@ -30,10 +30,24 @@ export const Route = createFileRoute("/s/$storeSlug")({
         { property: "og:description", content: description },
         { property: "og:type", content: "website" },
         { name: "twitter:card", content: "summary_large_image" },
-        ...(store ? [] : [{ name: "robots", content: "noindex" }]),
+        ...(store
+          ? [
+              { name: "theme-color", content: store.branding?.primaryColor || "#1f6b3b" },
+              { name: "apple-mobile-web-app-capable", content: "yes" },
+              { name: "apple-mobile-web-app-title", content: store.name.slice(0, 12) },
+            ]
+          : [{ name: "robots", content: "noindex" }]),
       ],
+      // تسطيب PWA خاص بالسوبرماركت ده: الأيقونة بتفتح /s/<slug> مش الصفحة الرئيسية.
+      links: store
+        ? [
+            { rel: "manifest", href: `/api/public/store-manifest/${store.slug}` },
+            { rel: "apple-touch-icon", href: `/api/public/store-logo/${store.id}` },
+          ]
+        : [],
     };
   },
+
   errorComponent: () => (
     <StoreMessage
       icon="error"
