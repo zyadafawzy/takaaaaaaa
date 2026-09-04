@@ -333,17 +333,30 @@ export function CashierPage() {
       customerId: customer?.id ?? null,
       discountAmount: discount,
       taxAmount: 0,
-      lines: lines.map((line) => ({
-        variantId: line.variantId,
-        productId: line.productId,
-        productName: line.productName,
-        unitLabel: line.unitLabel,
-        sellPrice: line.sellPrice,
-        costPrice: line.costPrice ?? null,
-        qty: line.qty,
-        discountPct: line.discountPct,
-        barcode: line.barcode ?? null,
-      })),
+      lines: lines
+        .filter((line) => !line.catalogItemId)
+        .map((line) => ({
+          variantId: line.variantId,
+          productId: line.productId,
+          productName: line.productName,
+          unitLabel: line.unitLabel,
+          sellPrice: line.sellPrice,
+          costPrice: line.costPrice ?? null,
+          qty: line.qty,
+          discountPct: line.discountPct,
+          barcode: line.barcode ?? null,
+        })),
+      catalogLines: lines
+        .filter((line) => line.catalogItemId)
+        .map((line) => ({
+          catalogItemId: line.catalogItemId!,
+          productName: line.productName,
+          unitLabel: line.unitLabel,
+          sellPrice: line.sellPrice,
+          qty: line.qty,
+          discountPct: line.discountPct,
+          barcode: line.barcode ?? null,
+        })),
       unknownLines,
       payments: payments.map((p) => ({ methodId: p.methodId, amount: p.amount })),
     };
