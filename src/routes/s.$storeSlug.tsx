@@ -42,9 +42,12 @@ export const Route = createFileRoute("/s/$storeSlug")({
       links: store
         ? [
             { rel: "manifest", href: `/api/public/store-manifest/${store.slug}` },
-            { rel: "apple-touch-icon", href: `/api/public/store-logo/${store.id}` },
+            ...(store.logoPath || store.logoUrl
+              ? [{ rel: "apple-touch-icon", href: `/api/public/store-logo/${store.id}` }]
+              : []),
           ]
         : [],
+
     };
   },
 
