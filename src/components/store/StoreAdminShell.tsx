@@ -293,10 +293,13 @@ export function StoreAdminShell({
 
   const signOut = async () => {
     window.sessionStorage.removeItem(`store-admin-auth-${storeSlug}`);
+    const { clearOfflineSession } = await import("@/lib/store-offline-auth");
+    clearOfflineSession(storeSlug);
     const { supabase } = await import("@/integrations/supabase/client");
     await supabase.auth.signOut();
     window.location.reload();
   };
+
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-muted/30 to-background">
