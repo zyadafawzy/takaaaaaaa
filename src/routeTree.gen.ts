@@ -63,6 +63,7 @@ import { Route as SStoreSlugCartRouteImport } from './routes/s.$storeSlug.cart'
 import { Route as SStoreSlugCheckoutRouteImport } from './routes/s.$storeSlug.checkout'
 import { Route as ApiPublicProductImageIdRouteImport } from './routes/api/public/product-image.$id'
 import { Route as ApiPublicStoreLogoIdRouteImport } from './routes/api/public/store-logo.$id'
+import { Route as ApiPublicStoreManifestStoreSlugRouteImport } from './routes/api/public/store-manifest.$storeSlug'
 import { Route as SStoreSlugAdminIndexRouteImport } from './routes/s.$storeSlug.admin.index'
 import { Route as SStoreSlugAdminAnnouncementsRouteImport } from './routes/s.$storeSlug.admin.announcements'
 import { Route as SStoreSlugAdminCatalogRouteImport } from './routes/s.$storeSlug.admin.catalog'
@@ -361,6 +362,12 @@ const ApiPublicStoreLogoIdRoute = ApiPublicStoreLogoIdRouteImport.update({
   path: '/api/public/store-logo/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicStoreManifestStoreSlugRoute =
+  ApiPublicStoreManifestStoreSlugRouteImport.update({
+    id: '/api/public/store-manifest/$storeSlug',
+    path: '/api/public/store-manifest/$storeSlug',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const SStoreSlugAdminIndexRoute = SStoreSlugAdminIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -564,6 +571,7 @@ export interface FileRoutesByFullPath {
   '/s/$storeSlug/': typeof SStoreSlugIndexRoute
   '/api/public/product-image/$id': typeof ApiPublicProductImageIdRoute
   '/api/public/store-logo/$id': typeof ApiPublicStoreLogoIdRoute
+  '/api/public/store-manifest/$storeSlug': typeof ApiPublicStoreManifestStoreSlugRoute
   '/s/$storeSlug/admin/announcements': typeof SStoreSlugAdminAnnouncementsRoute
   '/s/$storeSlug/admin/catalog': typeof SStoreSlugAdminCatalogRoute
   '/s/$storeSlug/admin/customers': typeof SStoreSlugAdminCustomersRoute
@@ -642,6 +650,7 @@ export interface FileRoutesByTo {
   '/s/$storeSlug': typeof SStoreSlugIndexRoute
   '/api/public/product-image/$id': typeof ApiPublicProductImageIdRoute
   '/api/public/store-logo/$id': typeof ApiPublicStoreLogoIdRoute
+  '/api/public/store-manifest/$storeSlug': typeof ApiPublicStoreManifestStoreSlugRoute
   '/s/$storeSlug/admin/announcements': typeof SStoreSlugAdminAnnouncementsRoute
   '/s/$storeSlug/admin/catalog': typeof SStoreSlugAdminCatalogRoute
   '/s/$storeSlug/admin/customers': typeof SStoreSlugAdminCustomersRoute
@@ -725,6 +734,7 @@ export interface FileRoutesById {
   '/s/$storeSlug/': typeof SStoreSlugIndexRoute
   '/api/public/product-image/$id': typeof ApiPublicProductImageIdRoute
   '/api/public/store-logo/$id': typeof ApiPublicStoreLogoIdRoute
+  '/api/public/store-manifest/$storeSlug': typeof ApiPublicStoreManifestStoreSlugRoute
   '/s/$storeSlug/admin/announcements': typeof SStoreSlugAdminAnnouncementsRoute
   '/s/$storeSlug/admin/catalog': typeof SStoreSlugAdminCatalogRoute
   '/s/$storeSlug/admin/customers': typeof SStoreSlugAdminCustomersRoute
@@ -810,6 +820,7 @@ export interface FileRouteTypes {
     | '/s/$storeSlug/'
     | '/api/public/product-image/$id'
     | '/api/public/store-logo/$id'
+    | '/api/public/store-manifest/$storeSlug'
     | '/s/$storeSlug/admin/announcements'
     | '/s/$storeSlug/admin/catalog'
     | '/s/$storeSlug/admin/customers'
@@ -888,6 +899,7 @@ export interface FileRouteTypes {
     | '/s/$storeSlug'
     | '/api/public/product-image/$id'
     | '/api/public/store-logo/$id'
+    | '/api/public/store-manifest/$storeSlug'
     | '/s/$storeSlug/admin/announcements'
     | '/s/$storeSlug/admin/catalog'
     | '/s/$storeSlug/admin/customers'
@@ -970,6 +982,7 @@ export interface FileRouteTypes {
     | '/s/$storeSlug/'
     | '/api/public/product-image/$id'
     | '/api/public/store-logo/$id'
+    | '/api/public/store-manifest/$storeSlug'
     | '/s/$storeSlug/admin/announcements'
     | '/s/$storeSlug/admin/catalog'
     | '/s/$storeSlug/admin/customers'
@@ -1022,6 +1035,7 @@ export interface RootRouteChildren {
   OrderPendingTokenRoute: typeof OrderPendingTokenRoute
   ApiPublicProductImageIdRoute: typeof ApiPublicProductImageIdRoute
   ApiPublicStoreLogoIdRoute: typeof ApiPublicStoreLogoIdRoute
+  ApiPublicStoreManifestStoreSlugRoute: typeof ApiPublicStoreManifestStoreSlugRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1402,6 +1416,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/store-logo/$id'
       fullPath: '/api/public/store-logo/$id'
       preLoaderRoute: typeof ApiPublicStoreLogoIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/store-manifest/$storeSlug': {
+      id: '/api/public/store-manifest/$storeSlug'
+      path: '/api/public/store-manifest/$storeSlug'
+      fullPath: '/api/public/store-manifest/$storeSlug'
+      preLoaderRoute: typeof ApiPublicStoreManifestStoreSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/s/$storeSlug/admin/': {
@@ -1812,6 +1833,7 @@ const rootRouteChildren: RootRouteChildren = {
   OrderPendingTokenRoute: OrderPendingTokenRoute,
   ApiPublicProductImageIdRoute: ApiPublicProductImageIdRoute,
   ApiPublicStoreLogoIdRoute: ApiPublicStoreLogoIdRoute,
+  ApiPublicStoreManifestStoreSlugRoute: ApiPublicStoreManifestStoreSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
