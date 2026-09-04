@@ -472,12 +472,14 @@ export function CashierPage() {
         ) : null}
 
         {results.length > 0 ? (
-          <ul className="divide-y divide-border rounded-lg border border-border">
-            {results.map((item) => (
+          <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
+            {results.map((item) => {
+              const image = (item as { imageUrl?: string | null }).imageUrl ?? null;
+              return (
               <li key={item.variantId}>
                 <button
                   type="button"
-                  className="flex w-full items-center justify-between p-3 text-start hover:bg-muted"
+                  className="flex w-full items-center gap-3 p-3 text-start transition-colors hover:bg-muted active:bg-muted/70"
                   onClick={async () => {
                     addLine(item);
                     if (pendingBarcode) {
@@ -493,15 +495,42 @@ export function CashierPage() {
                     }
                   }}
                 >
-                  <span className="font-medium">{item.productName}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {formatPrice(item.sellPrice)} · متاح {item.stock}
+                  <span className="size-12 shrink-0 overflow-hidden rounded-lg bg-muted">
+                    {image ? (
+                      <img
+                        src={`${image}?w=120`}
+                        alt=""
+                        width={48}
+                        height={48}
+                        loading="lazy"
+                        decoding="async"
+                        className="size-full object-cover"
+                      />
+                    ) : (
+                      <span className="flex size-full items-center justify-center text-[9px] text-muted-foreground">
+                        بدون صورة
+                      </span>
+                    )}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate font-semibold">{item.productName}</span>
+                    <span className="block text-[11px] text-muted-foreground">{item.unitLabel}</span>
+                  </span>
+                  <span className="shrink-0 text-end">
+                    <span className="block font-black text-primary">{formatPrice(item.sellPrice)}</span>
+                    <span
+                      className={`block text-[11px] font-bold ${item.stock > 0 ? "text-success" : "text-destructive"}`}
+                    >
+                      متاح {item.stock}
+                    </span>
                   </span>
                 </button>
               </li>
-            ))}
+              );
+            })}
           </ul>
         ) : null}
+
 
         <CartPanel
           lines={lines}

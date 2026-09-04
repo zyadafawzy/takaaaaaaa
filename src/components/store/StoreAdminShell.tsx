@@ -45,11 +45,22 @@ const tabs: Tab[] = [
  */
 export function useStoreSession(storeSlug: string) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [offlineMode, setOfflineMode] = useState(false);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     void (async () => {
+      const { getOfflineSession } = await import("@/lib/store-offline-auth");
+      const fallbackToOffline = () => {
+        if (cancelled) return false;
+        const session = getOfflineSession(storeSlug);
+        if (!session) return false;
+        setOfflineMode(true);
+        setIsLoggedIn(true);
+        return true;
+      };
+
       try {
         const { supabase } = await import("@/integrations/supabase/client");
         const { data } = await supabase.auth.getSession();
@@ -59,15 +70,19 @@ export function useStoreSession(storeSlug: string) {
         if (cancelled) return;
         if (result.ok) {
           window.sessionStorage.setItem(`store-admin-auth-${storeSlug}`, "true");
+          setOfflineMode(false);
           setIsLoggedIn(true);
-        } else {
+        } else if (!fallbackToOffline()) {
           window.sessionStorage.removeItem(`store-admin-auth-${storeSlug}`);
           setIsLoggedIn(false);
         }
       } catch {
         if (cancelled) return;
-        window.sessionStorage.removeItem(`store-admin-auth-${storeSlug}`);
-        setIsLoggedIn(false);
+        // مفيش نت أو الجلسة مش موجودة: نقبل جلسة أوفلاين محفوظة على الجهاز.
+        if (!fallbackToOffline()) {
+          window.sessionStorage.removeItem(`store-admin-auth-${storeSlug}`);
+          setIsLoggedIn(false);
+        }
       } finally {
         if (!cancelled) setReady(true);
       }
@@ -77,14 +92,31 @@ export function useStoreSession(storeSlug: string) {
     };
   }, [storeSlug]);
 
-  return { isLoggedIn, ready };
+  return { isLoggedIn, ready, offlineMode };
 }
+
 
 export function StoreAdminLogin({ storeSlug, storeName }: { storeSlug: string; storeName: string }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [online, setOnline] = useState(true);
+  const [canOffline, setCanOffline] = useState(false);
+
+  useEffect(() => {
+    const sync = () => setOnline(navigator.onLine);
+    sync();
+    void import("@/lib/store-offline-auth").then(({ hasOfflineCredentials }) =>
+      setCanOffline(hasOfflineCredentials(storeSlug)),
+    );
+    window.addEventListener("online", sync);
+    window.addEventListener("offline", sync);
+    return () => {
+      window.removeEventListener("online", sync);
+      window.removeEventListener("offline", sync);
+    };
+  }, [storeSlug]);
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background p-4">
@@ -98,6 +130,29 @@ export function StoreAdminLogin({ storeSlug, storeName }: { storeSlug: string; s
           event.preventDefault();
           setBusy(true);
           setError("");
+
+          const offlineAuth = await import("@/lib/store-offline-auth");
+
+          // دخول أوفلاين: لو مفيش نت خالص، نتحقق من البصمة المحفوظة على الجهاز.
+          const tryOffline = async (fallbackMessage: string) => {
+            const result = await offlineAuth.offlineLogin({ storeSlug, username, password });
+            if (result.ok) {
+              window.sessionStorage.setItem(`store-admin-auth-${storeSlug}`, "true");
+              window.location.reload();
+              return;
+            }
+            setError(
+              result.reason === "no-credential"
+                ? "الحساب ده مسجّلش على الجهاز ده قبل كده، لازم أول دخول يكون والنت شغّال."
+                : fallbackMessage,
+            );
+          };
+
+          if (!navigator.onLine) {
+            await tryOffline("كلمة المرور غلط (دخول أوفلاين)");
+            setBusy(false);
+            return;
+          }
 
           try {
             const { storeAdminLoginByPassword } = await import("@/lib/store-assets.functions");
@@ -113,6 +168,13 @@ export function StoreAdminLogin({ storeSlug, storeName }: { storeSlug: string; s
               if (signInError) {
                 setError("حصلت مشكلة في تجهيز الجلسة، جرّب تاني");
               } else {
+                // نحفظ بصمة الدخول عشان الجهاز ده يقدر يدخل أوفلاين بعدين.
+                await offlineAuth.rememberOfflineLogin({
+                  storeSlug,
+                  username,
+                  email: result.email,
+                  password,
+                });
                 window.sessionStorage.setItem(`store-admin-auth-${storeSlug}`, "true");
                 window.location.reload();
               }
@@ -120,12 +182,14 @@ export function StoreAdminLogin({ storeSlug, storeName }: { storeSlug: string; s
               setError("اسم المستخدم أو كلمة المرور غلط");
             }
           } catch {
-            setError("حصلت مشكلة في الدخول");
+            // فشل الاتصال بالسيرفر (النت قطع في نص الطلب): نجرب الدخول الأوفلاين.
+            await tryOffline("حصلت مشكلة في الدخول");
           } finally {
             setBusy(false);
           }
         }}
       >
+
         <div className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
           <ShieldCheck className="size-6" />
         </div>
@@ -133,6 +197,20 @@ export function StoreAdminLogin({ storeSlug, storeName }: { storeSlug: string; s
         <p className="mt-1 text-center text-sm text-muted-foreground">
           ادخل باسم المستخدم وكلمة المرور الخاصة بحسابك.
         </p>
+        {!online ? (
+          <p
+            className={`mt-3 rounded-xl border px-3 py-2 text-center text-[11px] font-bold ${
+              canOffline
+                ? "border-warning/40 bg-warning/10 text-warning"
+                : "border-destructive/40 bg-destructive/10 text-destructive"
+            }`}
+          >
+            {canOffline
+              ? "مفيش نت — الدخول هيتم أوفلاين بنفس اسم المستخدم وكلمة المرور المسجّلين على الجهاز."
+              : "مفيش نت، والجهاز ده مفيهوش حساب محفوظ. لازم أول دخول يكون والنت شغّال."}
+          </p>
+        ) : null}
+
 
         <div className="mt-6 space-y-3">
           <div>
@@ -215,10 +293,13 @@ export function StoreAdminShell({
 
   const signOut = async () => {
     window.sessionStorage.removeItem(`store-admin-auth-${storeSlug}`);
+    const { clearOfflineSession } = await import("@/lib/store-offline-auth");
+    clearOfflineSession(storeSlug);
     const { supabase } = await import("@/integrations/supabase/client");
     await supabase.auth.signOut();
     window.location.reload();
   };
+
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-muted/30 to-background">
