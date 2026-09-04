@@ -112,7 +112,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Tajawal:wght@400;500;700;800&family=Almarai:wght@400;700;800&family=Rubik:wght@400;500;700;800&family=Noto+Kufi+Arabic:wght@400;600;700&family=IBM+Plex+Sans+Arabic:wght@400;600;700&display=swap",
       },
-      { rel: "manifest", href: "/manifest.webmanifest" },
+      // ملحوظة: رابط الـ manifest مش هنا عشان كل صفحة متجر تجيب المانيفست بتاعها
+      // (تسطيب PWA خاص بالمتجر). صفحات تِكّة العامة بتضيف المانيفست العام.
+
       { rel: "icon", type: "image/png", href: "/favicon.png" },
       { rel: "apple-touch-icon", href: "/icon-192.png" },
     ],
